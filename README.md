@@ -38,9 +38,101 @@ docker-compose up --build
 - 🔍 Eureka Dashboard: http://localhost:8761
 - 🌉 API Gateway: http://localhost:8080
 
-### Local Development
+### Local Development Setup
 
-See [GUIDE.md](GUIDE.md) for step-by-step local setup instructions.
+Follow these steps to run the application locally without Docker:
+
+#### Step 1: Clone the Repository
+```bash
+git clone https://github.com/SadeeshaJayaweera/event-management-system.git
+cd event-management-system
+```
+
+#### Step 2: Start Infrastructure Services (in separate terminals)
+
+**Terminal 1 - Discovery Server (Eureka):**
+```bash
+cd discovery
+mvn spring-boot:run
+```
+Wait for: "Started EurekaServerApplication" message (usually ~30-40 seconds)  
+Verify at: http://localhost:8761
+
+**Terminal 2 - Config Server:**
+```bash
+cd config-server
+mvn spring-boot:run
+```
+Wait for: "Started ConfigServerApplication" and registration with Eureka
+
+**Terminal 3 - API Gateway:**
+```bash
+cd gateway
+mvn spring-boot:run
+```
+Wait for: "Started GatewayApplication" message  
+Verify at: http://localhost:8080/actuator/health
+
+#### Step 3: Start Business Services (in separate terminals)
+
+**Terminal 4 - User Service:**
+```bash
+cd backend/user-service
+mvn spring-boot:run
+```
+Verify at: http://localhost:8082/users/health
+
+**Terminal 5 - Event Service:**
+```bash
+cd backend/event-service
+mvn spring-boot:run
+```
+Verify at: http://localhost:8081/events/health
+
+**Terminal 6 - Booking Service:**
+```bash
+cd backend/booking-service
+mvn spring-boot:run
+```
+Verify at: http://localhost:8083/bookings/health
+
+#### Step 4: Start Frontend
+
+**Terminal 7 - Next.js Frontend:**
+```bash
+cd frontend
+npm install           # Only needed first time
+npm run dev
+```
+Access at: http://localhost:3000
+
+#### Step 5: Verify All Services
+
+Check Eureka Dashboard at http://localhost:8761 - you should see:
+- ✅ GATEWAY-SERVICE
+- ✅ USER-SERVICE
+- ✅ EVENT-SERVICE
+- ✅ BOOKING-SERVICE
+
+### Quick Start Commands (All at Once)
+
+If you prefer to start everything in one go, use the provided script:
+
+```bash
+# Make script executable (first time only)
+chmod +x start-all.sh
+
+# Start all services
+./start-all.sh
+```
+
+**Note:** Services use H2 in-memory database by default for local development. Data will be lost when services restart.
+
+### Stopping Services
+
+Press `Ctrl+C` in each terminal to stop individual services.
+
+For the full guide with troubleshooting, see [GUIDE.md](GUIDE.md).
 
 ---
 
