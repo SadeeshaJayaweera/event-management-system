@@ -184,19 +184,134 @@ Frontend (Next.js) → API Gateway → Microservices → Databases
 
 ```
 event-management-system/
-├── backend/                # Business microservices
-│   ├── event-service/      # Event management (Port 8081)
-│   ├── user-service/       # User management (Port 8082)
-│   └── booking-service/    # Booking management (Port 8083)
-├── discovery/              # Eureka Server (Port 8761)
-├── config-server/          # Config Server (Port 8888)
-├── gateway/                # API Gateway (Port 8080)
-├── frontend/               # Next.js App (Port 3000)
-├── config-repo/            # Configuration files
-├── docker-compose.yml      # Docker orchestration
-├── README.md               # This file
-└── GUIDE.md                # Complete documentation
+│
+├── backend/                           # Business microservices
+│   ├── event-service/                 # Event management service (Port 8081)
+│   │   ├── src/main/java/com/nsbm/eventservice/
+│   │   │   ├── controller/            # REST endpoints
+│   │   │   ├── service/               # Business logic
+│   │   │   ├── repository/            # Data access
+│   │   │   ├── model/                 # Entity models
+│   │   │   ├── dto/                   # Data transfer objects
+│   │   │   ├── exception/             # Custom exceptions
+│   │   │   └── util/                  # Utility classes
+│   │   ├── src/main/resources/
+│   │   │   └── application.yml        # Service configuration
+│   │   └── pom.xml                    # Maven dependencies
+│   │
+│   ├── user-service/                  # User management service (Port 8082)
+│   │   ├── src/main/java/com/nsbm/userservice/
+│   │   │   ├── controller/            # UserController
+│   │   │   ├── service/               # UserService
+│   │   │   ├── repository/            # UserRepository
+│   │   │   ├── model/                 # User, Role entities
+│   │   │   ├── dto/                   # RegisterRequest, LoginRequest, etc.
+│   │   │   └── exception/             # Error handlers
+│   │   ├── src/main/resources/
+│   │   │   └── application.yml
+│   │   └── pom.xml
+│   │
+│   └── booking-service/               # Booking management service (Port 8083)
+│       ├── src/main/java/com/nsbm/bookingservice/
+│       │   ├── controller/            # BookingController
+│       │   ├── service/               # BookingService
+│       │   ├── repository/            # BookingRepository
+│       │   ├── client/                # Feign clients (EventServiceClient)
+│       │   ├── model/                 # Booking entity
+│       │   └── dto/                   # Booking DTOs
+│       ├── src/main/resources/
+│       │   └── application.yml
+│       └── pom.xml
+│
+├── discovery/                         # Eureka Server (Port 8761)
+│   ├── src/main/java/com/nsbm/discovery/
+│   │   └── DiscoveryServerApplication.java
+│   ├── src/main/resources/
+│   │   └── application.yml
+│   └── pom.xml
+│
+├── config-server/                     # Config Server (Port 8888)
+│   ├── src/main/java/com/nsbm/configserver/
+│   │   └── ConfigServerApplication.java
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── config-repo/               # Configuration repository
+│   └── pom.xml
+│
+├── gateway/                           # API Gateway (Port 8080)
+│   ├── src/main/java/com/nsbm/gateway/
+│   │   └── GatewayApplication.java
+│   ├── src/main/resources/
+│   │   └── application.yml            # Route configurations
+│   └── pom.xml
+│
+├── frontend/                          # Next.js Application (Port 3000)
+│   ├── src/
+│   │   ├── app/                       # Next.js 14 App Router
+│   │   │   ├── auth/                  # Authentication pages
+│   │   │   │   ├── login/             # Login page
+│   │   │   │   └── register/          # Registration page
+│   │   │   ├── events/                # Event pages
+│   │   │   │   ├── [id]/              # Event details (dynamic)
+│   │   │   │   └── create/            # Create event page
+│   │   │   ├── bookings/              # Bookings page
+│   │   │   ├── profile/               # User profile page
+│   │   │   ├── layout.tsx             # Root layout
+│   │   │   ├── page.tsx               # Home page
+│   │   │   └── globals.css            # Global styles
+│   │   ├── components/                # Reusable components
+│   │   │   ├── Navbar.tsx
+│   │   │   └── EventCard.tsx
+│   │   ├── contexts/                  # React contexts
+│   │   │   └── AuthContext.tsx        # Authentication state
+│   │   ├── services/                  # API service layer
+│   │   │   ├── userService.ts
+│   │   │   ├── eventService.ts
+│   │   │   └── bookingService.ts
+│   │   ├── lib/                       # Utilities
+│   │   │   └── api.ts                 # Axios configuration
+│   │   └── types/                     # TypeScript types
+│   │       └── index.ts
+│   ├── public/                        # Static assets
+│   ├── package.json                   # NPM dependencies
+│   └── tailwind.config.ts             # Tailwind CSS config
+│
+├── config-repo/                       # Centralized configurations
+│   └── application.yml                # Shared configuration
+│
+├── logs/                              # Application logs
+│
+├── docker-compose.yml                 # Docker orchestration
+├── build.sh / build.bat               # Build scripts
+├── start-all.sh                       # Start all services script
+├── stop-all.sh                        # Stop all services script
+│
+├── README.md                          # Project overview (this file)
+├── GUIDE.md                           # Complete development guide
+├── GITHUB_ISSUES.md                   # List of issues/enhancements
+├── LICENSE                            # MIT License
+├── .gitignore                         # Git ignore rules
+└── package.json                       # Root package configuration
 ```
+
+### Key Directories Explained
+
+**Backend Services:**
+- Each service follows the standard Spring Boot structure
+- Clean architecture: Controller → Service → Repository → Model
+- DTOs for data transfer between layers
+- Custom exception handling
+
+**Frontend:**
+- Next.js 14 with App Router
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Separated concerns: components, services, contexts
+
+**Infrastructure:**
+- Discovery Server for service registration
+- Config Server for centralized configuration
+- API Gateway for routing and load balancing
 
 ---
 
