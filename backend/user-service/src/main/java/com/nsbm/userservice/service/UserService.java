@@ -39,12 +39,18 @@ public class UserService {
 
         user = userRepository.save(user);
 
+        // Create user DTO
+        UserDTO userDTO = toDTO(user);
+
         return AuthResponse.builder()
+                .token("temp-token-" + user.getId()) // Placeholder token until JWT is implemented
+                .type("Bearer")
                 .userId(user.getId())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole().name())
+                .user(userDTO)
                 .message("User registered successfully")
                 .build();
     }
@@ -62,12 +68,18 @@ public class UserService {
             throw new IllegalStateException("Account is disabled");
         }
 
+        // Create user DTO
+        UserDTO userDTO = toDTO(user);
+
         return AuthResponse.builder()
+                .token("temp-token-" + user.getId()) // Placeholder token until JWT is implemented
+                .type("Bearer")
                 .userId(user.getId())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole().name())
+                .user(userDTO)
                 .message("Login successful")
                 .build();
     }

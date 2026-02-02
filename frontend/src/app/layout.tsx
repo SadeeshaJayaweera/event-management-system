@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '../contexts/AuthContext'
-import Navbar from '../components/Navbar'
+import { ThemeProvider } from '../contexts/ThemeContext'
+import ClientLayout from './ClientLayout'
 
 export const metadata: Metadata = {
   title: 'Event Management System',
@@ -16,11 +17,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          <Navbar />
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
 }
+

@@ -1,60 +1,69 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/events?search=${encodeURIComponent(searchQuery)}`;
+    }
+  };
 
   return (
-    <nav>
-      {/* The nav > div rule in globals.css handles the flex container and space-between alignment */}
-      <div>
+    <nav className="navbar">
+      <div className="navbar-container">
         {/* Left Side: Brand/Logo */}
-        <Link href="/" className="hover-lift" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-          <span style={{ fontSize: '1.75rem' }}>🎫</span>
-          <h1 style={{
-            fontSize: '1.75rem',
-            margin: 0,
-            background: 'linear-gradient(135deg, var(--primary-600), var(--accent-600))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            EventHub
-          </h1>
+        <Link href="/" className="navbar-brand">
+          <div className="brand-logo">
+            <span className="brand-emoji">🎫</span>
+          </div>
+          <span className="brand-text">EventHub</span>
         </Link>
 
-        {/* Right Side: Login or User Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Center: Search Bar (only show when authenticated) */}
+        {isAuthenticated && (
+          <form onSubmit={handleSearch} className="navbar-search">
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            <button type="submit" className="search-btn" aria-label="Search">
+              🔍
+            </button>
+          </form>
+        )}
+
+        {/* Right Side: Actions */}
+        <div className="navbar-actions">
           {isAuthenticated ? (
             <>
-              <Link
-                href="/profile"
-                className="hover-lift"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  textDecoration: 'none',
-                  color: 'var(--text-secondary)',
-                  fontWeight: 600
-                }}
-              >
-                <span>👤</span>
-                <span className="hidden sm:inline">{user?.firstName}</span>
-              </Link>
-              <button
-                onClick={logout}
-                className="btn btn-secondary"
-                style={{ padding: '0.5rem 1.25rem' }}
-              >
-                Logout
+              {/* Notification Bell */}
+              <button className="navbar-icon-btn" aria-label="Notifications">
+                <span className="icon-bell">🔔</span>
+                <span className="notification-badge">3</span>
               </button>
+
+              {/* New Event Button */}
+              <Link href="/events/create" className="navbar-new-event-btn">
+                <span className="btn-icon">➕</span>
+                <span className="btn-text">New Event</span>
+              </Link>
             </>
           ) : (
-            <Link href="/auth/login" className="btn btn-primary">
-              Login
-            </Link>
+            <>
+              <Link href="/auth/login" className="navbar-signin-btn">
+                Sign In
+              </Link>
+            </>
           )}
         </div>
       </div>
