@@ -3,6 +3,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { usePathname } from 'next/navigation';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -21,6 +22,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                         {children}
                     </main>
                 </div>
+                <Footer />
             </>
         );
     }
@@ -29,6 +31,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <>
             {!isAuthPage && <Navbar />}
             {children}
+            {!isAuthPage && <Footer />}
         </>
     );
 }

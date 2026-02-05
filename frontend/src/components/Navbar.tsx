@@ -20,10 +20,7 @@ export default function Navbar() {
       <div className="navbar-container">
         {/* Left Side: Brand/Logo */}
         <Link href="/" className="navbar-brand">
-          <div className="brand-logo">
-            <span className="brand-emoji">🎫</span>
-          </div>
-          <span className="brand-text">EventHub</span>
+          <span className="brand-text">EventFlow</span>
         </Link>
 
         {/* Center: Search Bar (only show when authenticated) */}
@@ -62,6 +59,9 @@ export default function Navbar() {
             <>
               <Link href="/auth/login" className="navbar-signin-btn">
                 Sign In
+              </Link>
+              <Link href="/auth/register" className="navbar-new-event-btn">
+                Get Started
               </Link>
             </>
           )}
