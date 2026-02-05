@@ -6,11 +6,12 @@ import com.nsbm.userservice.exception.ResourceNotFoundException;
 import com.nsbm.userservice.model.Role;
 import com.nsbm.userservice.model.User;
 import com.nsbm.userservice.repository.UserRepository;
+import com.nsbm.userservice.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,17 +22,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class UserService {
 
     private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     @org.springframework.beans.factory.annotation.Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
@@ -47,7 +45,7 @@ public class UserService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
-                .password(request.getPassword()) // In production, should hash the password
+                .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
                 .role(Role.USER)
                 .enabled(true)
@@ -58,8 +56,16 @@ public class UserService {
         // Create user DTO
         UserDTO userDTO = toDTO(user);
 
+        // Generate JWT token
+        String token = jwtService.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRole().name());
+
         return AuthResponse.builder()
-                .token("temp-token-" + user.getId()) // Placeholder token until JWT is implemented
+                .token(token)
                 .type("Bearer")
                 .userId(user.getId())
                 .email(user.getEmail())
@@ -75,8 +81,8 @@ public class UserService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
 
-        // In production, should verify hashed password
-        if (!user.getPassword().equals(request.getPassword())) {
+        // Verify password using BCrypt
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalStateException("Invalid credentials");
         }
 
@@ -87,8 +93,16 @@ public class UserService {
         // Create user DTO
         UserDTO userDTO = toDTO(user);
 
+        // Generate JWT token
+        String token = jwtService.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRole().name());
+
         return AuthResponse.builder()
-                .token("temp-token-" + user.getId()) // Placeholder token until JWT is implemented
+                .token(token)
                 .type("Bearer")
                 .userId(user.getId())
                 .email(user.getEmail())
@@ -155,12 +169,12 @@ public class UserService {
                 }
             }
 
-            // Register new user
+            // Register new user with a secure placeholder password
             user = User.builder()
                     .email(email)
                     .firstName(firstName != null ? firstName : "Google")
                     .lastName(lastName != null ? lastName : "User")
-                    .password("GOOGLE_AUTH") // Dummy password
+                    .password(passwordEncoder.encode("GOOGLE_OAUTH_" + System.currentTimeMillis()))
                     .role(userRole)
                     .enabled(true)
                     .build();
@@ -194,8 +208,16 @@ public class UserService {
     }
 
     private AuthResponse buildAuthResponse(User user, UserDTO userDTO, String message) {
+        // Generate real JWT token
+        String token = jwtService.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRole().name());
+
         return AuthResponse.builder()
-                .token("temp-token-" + user.getId())
+                .token(token)
                 .type("Bearer")
                 .userId(user.getId())
                 .email(user.getEmail())

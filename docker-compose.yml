@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Service Discovery
   discovery:
@@ -11,8 +9,10 @@ services:
       - "8761:8761"
     networks:
       - event-management-network
+    environment:
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -33,8 +33,9 @@ services:
       - event-management-network
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8888/actuator/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8888/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -57,8 +58,9 @@ services:
       - event-management-network
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -80,7 +82,7 @@ services:
     networks:
       - event-management-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -107,6 +109,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://event-db:3306/eventdb
       - SPRING_DATASOURCE_USERNAME=eventuser
       - SPRING_DATASOURCE_PASSWORD=eventpass
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
 
   # MySQL Database for User Service
   user-db:
@@ -124,7 +127,7 @@ services:
     networks:
       - event-management-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -151,6 +154,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/userdb
       - SPRING_DATASOURCE_USERNAME=useruser
       - SPRING_DATASOURCE_PASSWORD=userpass
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
 
   # MySQL Database for Booking Service
   booking-db:
@@ -168,7 +172,7 @@ services:
     networks:
       - event-management-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -195,6 +199,142 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://booking-db:3306/bookingdb
       - SPRING_DATASOURCE_USERNAME=bookinguser
       - SPRING_DATASOURCE_PASSWORD=bookingpass
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+
+  # MySQL Database for Notification Service
+  notification-db:
+    image: mysql:8.0
+    container_name: notification-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notificationdb
+      MYSQL_USER: notificationuser
+      MYSQL_PASSWORD: notificationpass
+    ports:
+      - "3310:3306"
+    volumes:
+      - notification-db-data:/var/lib/mysql
+    networks:
+      - event-management-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      notification-db:
+        condition: service_healthy
+    networks:
+      - event-management-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://notification-db:3306/notificationdb
+      - SPRING_DATASOURCE_USERNAME=notificationuser
+      - SPRING_DATASOURCE_PASSWORD=notificationpass
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+
+  # MySQL Database for Payment Service
+  payment-db:
+    image: mysql:8.0
+    container_name: payment-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: paymentdb
+      MYSQL_USER: paymentuser
+      MYSQL_PASSWORD: paymentpass
+    ports:
+      - "3311:3306"
+    volumes:
+      - payment-db-data:/var/lib/mysql
+    networks:
+      - event-management-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./backend/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      payment-db:
+        condition: service_healthy
+    networks:
+      - event-management-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://payment-db:3306/paymentdb
+      - SPRING_DATASOURCE_USERNAME=paymentuser
+      - SPRING_DATASOURCE_PASSWORD=paymentpass
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+
+  # MySQL Database for Review Service
+  review-db:
+    image: mysql:8.0
+    container_name: review-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: reviewdb
+      MYSQL_USER: reviewuser
+      MYSQL_PASSWORD: reviewpass
+    ports:
+      - "3312:3306"
+    volumes:
+      - review-db-data:/var/lib/mysql
+    networks:
+      - event-management-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Review Service
+  review-service:
+    build:
+      context: ./backend/review-service
+      dockerfile: Dockerfile
+    container_name: review-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      discovery:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      review-db:
+        condition: service_healthy
+    networks:
+      - event-management-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://review-db:3306/reviewdb
+      - SPRING_DATASOURCE_USERNAME=reviewuser
+      - SPRING_DATASOURCE_PASSWORD=reviewpass
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
 
   # Frontend
   frontend:
@@ -220,3 +360,6 @@ volumes:
   event-db-data:
   user-db-data:
   booking-db-data:
+  notification-db-data:
+  payment-db-data:
+  review-db-data:

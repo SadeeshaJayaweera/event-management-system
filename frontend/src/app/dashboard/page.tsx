@@ -19,6 +19,7 @@ export default function DashboardPage() {
         } else if (!authLoading && !isAuthenticated) {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, user, authLoading]);
 
     const fetchDashboardData = async () => {
@@ -190,7 +191,7 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             <div className="p-10 text-center text-gray-500">
-                                <p className="mb-4">You haven't created any events yet.</p>
+                                <p className="mb-4">You haven&apos;t created any events yet.</p>
                                 <Link href="/events/create" className="text-indigo-500 font-medium hover:underline">Create an event now</Link>
                             </div>
                         )}

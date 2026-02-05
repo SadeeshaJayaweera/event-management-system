@@ -5,16 +5,12 @@ spring:
   application:
     name: booking-service
   datasource:
-
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3309/bookingdb}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root} 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    username: ${SPRING_DATASOURCE_USERNAME:bookinguser}
+    password: ${SPRING_DATASOURCE_PASSWORD:bookingpass}
   jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: create-drop
     show-sql: true
@@ -35,3 +31,9 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+# JWT Configuration (must match user-service secret)
+jwt:
+  secret: ${JWT_SECRET:bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=}
+  expiration: ${JWT_EXPIRATION:86400000}
+

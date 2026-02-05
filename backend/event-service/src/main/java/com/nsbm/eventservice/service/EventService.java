@@ -35,11 +35,11 @@ public class EventService {
                 .address(request.getAddress())
                 .capacity(request.getCapacity())
                 .availableSeats(request.getCapacity())
-                .price(request.getPrice())
+                .price(new java.math.BigDecimal(request.getPrice()))
                 .category(request.getCategory())
                 .organizerId(request.getOrganizerId())
                 .organizerName(request.getOrganizerName())
-                .status(EventStatus.DRAFT)
+                .status(EventStatus.PUBLISHED) // Auto-publish on creation
                 .imageUrls(request.getImageUrls() != null ? request.getImageUrls() : List.of())
                 .thumbnailUrl(request.getThumbnailUrl())
                 .featured(request.getFeatured() != null ? request.getFeatured() : false)

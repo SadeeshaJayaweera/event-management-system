@@ -126,7 +126,7 @@ export default function MyEventsPage() {
                         <span className="text-3xl">📅</span>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">No Events Created</h3>
-                    <p className="text-gray-500 mb-6 max-w-md mx-auto">You haven't organized any events yet. Start by creating your first event to reach your audience.</p>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">You haven&apos;t organized any events yet. Start by creating your first event to reach your audience.</p>
                     <Link href="/events/create" className="btn btn-primary shadow-lg shadow-indigo-200">
                         Create Your First Event
                     </Link>

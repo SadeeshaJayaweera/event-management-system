@@ -1,5 +1,11 @@
 server:
   port: 8080
+  servlet:
+    session:
+      cookie:
+        secure: false
+        http-only: true
+        same-site: lax
 
 spring:
   application:
@@ -13,15 +19,21 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "http://localhost:3000"
+            allowedOrigins: "${CORS_ALLOWED_ORIGINS:http://localhost:3000}"
             allowedMethods:
               - GET
               - POST
               - PUT
               - DELETE
               - OPTIONS
-            allowedHeaders: "*"
+            allowedHeaders:
+              - Content-Type
+              - Authorization
+              - X-Requested-With
+            exposedHeaders:
+              - Authorization
             allowCredentials: true
+            maxAge: 3600
       routes:
         - id: event-service
           uri: lb://event-service
@@ -29,18 +41,54 @@ spring:
             - Path=/api/events/**
           filters:
             - RewritePath=/api/events/(?<segment>.*), /events/${segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
         - id: user-service
           uri: lb://user-service
           predicates:
             - Path=/api/users/**
           filters:
             - RewritePath=/api/users/(?<segment>.*), /users/${segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
         - id: booking-service
           uri: lb://booking-service
           predicates:
             - Path=/api/bookings/**
           filters:
             - RewritePath=/api/bookings/(?<segment>.*), /bookings/${segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - RewritePath=/api/notifications/(?<segment>.*), /notifications/${segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - RewritePath=/api/payments/(?<segment>.*), /payments/${segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
+        - id: review-service
+          uri: lb://review-service
+          predicates:
+            - Path=/api/reviews/**
+          filters:
+            - RewritePath=/api/reviews/(?<segment>.*), /reviews/${segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
 
 eureka:
   client:
@@ -55,3 +103,9 @@ management:
     web:
       exposure:
         include: health,info,gateway
+
+# JWT Configuration (must match user-service secret)
+jwt:
+  secret: ${JWT_SECRET:bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=}
+  expiration: ${JWT_EXPIRATION:86400000}
+

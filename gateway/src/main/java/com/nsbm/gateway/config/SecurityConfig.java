@@ -16,7 +16,7 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(ServerHttpSecurity.CorsSpec::disable) // Let Gateway globalcors handle it
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/api/**").permitAll()
+                        // Allow all exchanges - JWT filter handles authentication
                         .anyExchange().permitAll())
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)

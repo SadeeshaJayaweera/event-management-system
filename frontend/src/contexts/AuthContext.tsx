@@ -19,6 +19,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to decode JWT and check expiration
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    
+    const decoded = JSON.parse(atob(parts[1]));
+    const expirationTime = decoded.exp * 1000; // Convert to milliseconds
+    return Date.now() >= expirationTime;
+  } catch (e) {
+    return true;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -30,13 +44,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        // Invalid stored user, clear storage
+      // Check if token is expired
+      if (isTokenExpired(storedToken)) {
+        // Token expired, clear storage
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+      } else {
+        setToken(storedToken);
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          // Invalid stored user, clear storage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
       }
     }
     setIsLoading(false);

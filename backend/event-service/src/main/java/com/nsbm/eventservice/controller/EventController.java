@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class EventController {
     // ==================== CRUD Endpoints ====================
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     public ResponseEntity<EventDTO> createEvent(@Valid @RequestBody CreateEventRequest request) {
         EventDTO event = eventService.createEvent(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(event);
@@ -41,6 +43,7 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     public ResponseEntity<EventDTO> updateEvent(
             @PathVariable Long id,
             @Valid @RequestBody UpdateEventRequest request) {
@@ -49,6 +52,7 @@ public class EventController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
         eventService.deleteEvent(id);
         return ResponseEntity.noContent().build();
@@ -101,12 +105,14 @@ public class EventController {
     // ==================== Status Management Endpoints ====================
 
     @PutMapping("/{id}/publish")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     public ResponseEntity<EventDTO> publishEvent(@PathVariable Long id) {
         EventDTO event = eventService.publishEvent(id);
         return ResponseEntity.ok(event);
     }
 
     @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     public ResponseEntity<EventDTO> cancelEvent(@PathVariable Long id) {
         EventDTO event = eventService.cancelEvent(id);
         return ResponseEntity.ok(event);
@@ -115,6 +121,7 @@ public class EventController {
     // ==================== Seat Management Endpoints ====================
 
     @PostMapping("/{id}/reserve-seats")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<EventDTO> reserveSeats(
             @PathVariable Long id,
             @RequestParam int numberOfSeats) {
@@ -123,6 +130,7 @@ public class EventController {
     }
 
     @PostMapping("/{id}/release-seats")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     public ResponseEntity<EventDTO> releaseSeats(
             @PathVariable Long id,
             @RequestParam int numberOfSeats) {

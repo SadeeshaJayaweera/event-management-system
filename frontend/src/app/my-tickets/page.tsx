@@ -76,7 +76,7 @@ export default function MyTicketsPage() {
                 <div className="card text-center py-12">
                     <span className="text-4xl block mb-4">🎫</span>
                     <h3 className="text-xl font-bold">No Tickets Found</h3>
-                    <p className="text-gray-500 mb-6">You haven't purchased any tickets yet.</p>
+                    <p className="text-gray-500 mb-6">You haven&apos;t purchased any tickets yet.</p>
                     <Link href="/events" className="btn btn-primary">Browse Events</Link>
                 </div>
             )}

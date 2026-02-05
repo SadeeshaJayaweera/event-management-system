@@ -49,7 +49,7 @@ public class CreateEventRequest {
 
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.0", message = "Price cannot be negative")
-    private BigDecimal price;
+    private String price;
 
     @NotNull(message = "Category is required")
     private EventCategory category;

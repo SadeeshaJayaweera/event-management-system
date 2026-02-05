@@ -145,7 +145,7 @@ export default function LoginPage() {
 
             {/* Register Link */}
             <div className="auth-footer-link">
-              <span>Don't have an account? </span>
+              <span>Don&apos;t have an account? </span>
               <Link href="/auth/register">Sign up</Link>
             </div>
           </div>

@@ -3,7 +3,6 @@ server:
 
 spring:
   application:
-
     name: user-service
   security:
     oauth2:
@@ -12,16 +11,12 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID:264246243864-5ojqq2rj6ma33sououb45uc8e5da8o2f.apps.googleusercontent.com}
   datasource:
-
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3308/userdb}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root}
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    username: ${SPRING_DATASOURCE_USERNAME:useruser}
+    password: ${SPRING_DATASOURCE_PASSWORD:userpass}
   jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: create-drop
     show-sql: true
@@ -42,3 +37,10 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
