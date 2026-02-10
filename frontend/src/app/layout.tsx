@@ -6,8 +6,12 @@ import ClientLayout from './ClientLayout'
 import { GoogleWrapper } from '../providers/GoogleWrapper'
 
 export const metadata: Metadata = {
-  title: 'Event Management System',
+  title: 'EventFlow - Event Management System',
   description: 'Microservices-based Event Management Platform',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

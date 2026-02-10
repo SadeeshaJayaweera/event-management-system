@@ -12,19 +12,18 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
     const isAuthPage = pathname?.startsWith('/auth');
     const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
+    const isHomePage = pathname === '/';
 
     if (isAuthenticated) {
         if (isOrganizer) {
             return (
-                <>
+                <div className="min-h-screen bg-gray-50">
+                    <Sidebar />
                     <Navbar />
-                    <div className="app-layout">
-                        <Sidebar />
-                        <main className="main-with-sidebar">
-                            {children}
-                        </main>
-                    </div>
-                </>
+                    <main className="pt-16">
+                        {children}
+                    </main>
+                </div>
             );
         }
 
@@ -32,7 +31,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         return (
             <>
                 <Navbar />
-                <div className="min-h-screen bg-white">
+                <div className="min-h-screen bg-white pt-16">
                     {children}
                 </div>
                 <Footer />
@@ -40,10 +39,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         );
     }
 
+    // Guest/Unauthenticated Layout
     return (
         <>
             {!isAuthPage && <Navbar />}
-            {children}
+            <div className={`min-h-screen bg-white ${isHomePage ? '' : 'pt-16'}`}>
+                {children}
+            </div>
             {!isAuthPage && <Footer />}
         </>
     );

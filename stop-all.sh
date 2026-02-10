@@ -1,16 +1,13 @@
 #!/bin/bash
 
-# Event Management System - Stop All Services
+echo "🛑 Stopping Event Management System..."
+echo "======================================"
 
-echo "Stopping all services..."
+# Stop all services
+docker-compose down
 
-# Kill processes by port
-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-lsof -ti:8083 | xargs kill -9 2>/dev/null || true
-lsof -ti:8082 | xargs kill -9 2>/dev/null || true
-lsof -ti:8081 | xargs kill -9 2>/dev/null || true
-lsof -ti:8080 | xargs kill -9 2>/dev/null || true
-lsof -ti:8888 | xargs kill -9 2>/dev/null || true
-lsof -ti:8761 | xargs kill -9 2>/dev/null || true
-
-echo "All services stopped."
+echo ""
+echo "✅ All services stopped!"
+echo ""
+echo "💡 To remove volumes as well: docker-compose down -v"
+echo "======================================"

@@ -9,7 +9,7 @@ import { getErrorMessage } from '../../../lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, googleLogin } = useAuth();
+  const { login, googleLogin, user } = useAuth();
   const [userType, setUserType] = useState<'organizer' | 'attendee'>('organizer');
   const [formData, setFormData] = useState({
     email: '',
@@ -45,14 +45,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(formData);
-      // Determine redirect based on user type or response role
-      // For now, redirect to appropriate dashboard based on selected type
-      if (userType === 'organizer') {
-        router.push('/dashboard/organizer');
-      } else {
-        router.push('/');
-      }
+      await login(formData);// Redirect to dashboard which will handle role-based routing
+      router.push('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       setError(getErrorMessage(err));
