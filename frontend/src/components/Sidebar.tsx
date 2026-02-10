@@ -59,7 +59,7 @@ export default function Sidebar() {
             )
         },
         {
-            name: 'Events', href: '/my-events', icon: (
+            name: 'Events', href: '/dashboard/organizer/events', icon: (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -73,7 +73,7 @@ export default function Sidebar() {
             )
         },
         {
-            name: 'Settings', href: '/settings', icon: (
+            name: 'Settings', href: '/dashboard/organizer/settings', icon: (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -162,97 +162,111 @@ export default function Sidebar() {
 
     // Default Attendee Sidebar
     return (
-        <aside className="sidebar">
+        <aside className="w-64 fixed inset-y-0 left-0 bg-white border-r border-gray-200 z-50 flex flex-col shadow-sm pt-[64px] overflow-y-auto hidden md:flex">
             {/* Calendar Widget */}
-            <div className="sidebar-calendar">
-                <div className="calendar-header">
-                    <button onClick={() => changeMonth(-1)} className="calendar-nav-btn">‹</button>
-                    <h3>{currentMonth} {currentYear}</h3>
-                    <button onClick={() => changeMonth(1)} className="calendar-nav-btn">›</button>
+            <div className="p-4 border-b border-gray-100">
+                <div className="flex justify-between items-center mb-4">
+                    <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h3 className="text-sm font-semibold text-gray-900">{currentMonth} {currentYear}</h3>
+                    <button onClick={() => changeMonth(1)} className="p-1 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
                 </div>
-                <div className="calendar-weekdays">
+                <div className="grid grid-cols-7 gap-1 text-center mb-2">
                     {daysOfWeek.map((day) => (
-                        <div key={day} className="calendar-weekday">{day}</div>
+                        <div key={day} className="text-xs font-medium text-gray-400 py-1">{day.charAt(0)}</div>
                     ))}
                 </div>
-                <div className="calendar-days">
-                    {days.map((day, index) => (
-                        <div
-                            key={index}
-                            className={`calendar-day ${day === null ? 'empty' : ''} ${day === today && isCurrentMonth ? 'today' : ''
-                                }`}
-                        >
-                            {day}
-                        </div>
-                    ))}
+                <div className="grid grid-cols-7 gap-1 text-center">
+                    {days.map((day, index) => { // Fixed mapping logic for empty cells
+                        if (day === null) return <div key={`empty-${index}`} className="invisible"></div>;
+                        return (
+                            <div
+                                key={index}
+                                className={`text-xs w-7 h-7 flex items-center justify-center rounded-full mx-auto
+                                    ${day === today && isCurrentMonth ? 'bg-indigo-600 text-white font-bold' : 'text-gray-700 hover:bg-gray-100 cursor-pointer'}
+                                `}
+                            >
+                                {day}
+                            </div>
+                        );
+                    })}
                 </div>
-                <div className="calendar-legend">
-                    <div className="legend-item">
-                        <div className="legend-dot event-day"></div>
-                        <span>Event Day</span>
-                    </div>
-                    <div className="legend-item">
-                        <div className="legend-dot today"></div>
+                <div className="flex items-center gap-4 mt-4 text-xs text-gray-500 justify-center">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
                         <span>Today</span>
                     </div>
                 </div>
             </div>
 
             {/* Dashboard Navigation */}
-            <nav className="sidebar-nav">
+            <nav className="p-4 space-y-1">
                 {attendeeNavItems.map((item) => (
                     <Link
                         key={item.name}
                         href={item.href}
-                        className={`sidebar-nav-item ${pathname === item.href ? 'active' : ''}`}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
+                            ? 'bg-indigo-50 text-indigo-600'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
                     >
-                        <span className="nav-icon">{item.icon}</span>
-                        <span className="nav-text">{item.name}</span>
+                        <span className="text-lg">{item.icon}</span>
+                        <span>{item.name}</span>
                     </Link>
                 ))}
             </nav>
 
             {/* Quick Stats */}
-            <div className="sidebar-stats">
-                <h4 className="stats-title">Quick Stats</h4>
-                <div className="stat-item">
-                    <span className="stat-label">Upcoming Events</span>
-                    <span className="stat-value">12</span>
-                </div>
-                <div className="stat-item">
-                    <span className="stat-label">Saved</span>
-                    <span className="stat-value">8</span>
-                </div>
-                <div className="stat-item">
-                    <span className="stat-label">Attending</span>
-                    <span className="stat-value">5</span>
+            <div className="px-4 py-3 border-t border-gray-100">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Stats</h4>
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">Upcoming Events</span>
+                        <span className="font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full text-xs">12</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">Saved</span>
+                        <span className="font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full text-xs">8</span>
+                    </div>
                 </div>
             </div>
 
             {/* Categories */}
-            <div className="sidebar-categories">
-                <h4 className="categories-title">Categories</h4>
-                {categories.map((category) => (
-                    <Link
-                        key={category.name}
-                        href={category.href}
-                        className="category-item"
-                    >
-                        <span className="category-icon">{category.icon}</span>
-                        <span className="category-name">{category.name}</span>
-                    </Link>
-                ))}
+            <div className="px-4 py-3 border-t border-gray-100 flex-1 overflow-y-auto">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Categories</h4>
+                <div className="space-y-1">
+                    {categories.map((category) => (
+                        <Link
+                            key={category.name}
+                            href={category.href}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                        >
+                            <span>{category.icon}</span>
+                            <span>{category.name}</span>
+                        </Link>
+                    ))}
+                </div>
             </div>
 
             {/* Bottom Actions */}
-            <div className="sidebar-actions">
-                <Link href="/settings" className="sidebar-action-item">
-                    <span className="action-icon">⚙️</span>
-                    <span className="action-text">Settings</span>
+            <div className="p-4 border-t border-gray-100 space-y-1 bg-gray-50/50">
+                <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition-all">
+                    <span>⚙️</span>
+                    <span>Settings</span>
                 </Link>
-                <button onClick={logout} className="sidebar-action-item logout-btn">
-                    <span className="action-icon">🚪</span>
-                    <span className="action-text">Logout</span>
+                <button
+                    onClick={() => logout()}
+                    className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-white hover:shadow-sm transition-all text-left"
+                >
+                    <span>🚪</span>
+                    <span>Logout</span>
                 </button>
             </div>
         </aside>

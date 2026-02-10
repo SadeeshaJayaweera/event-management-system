@@ -39,7 +39,7 @@ export default function RegisterPage() {
       const nameParts = formData.fullName.trim().split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || nameParts[0] || '';
-      
+
       await register({
         firstName,
         lastName,
@@ -48,7 +48,13 @@ export default function RegisterPage() {
         phone: '',
         role: formData.role,
       } as any);
-      router.push('/');
+
+      // Redirect based on role immediately after registration
+      if (formData.role === 'ORGANIZER') {
+        router.push('/dashboard/organizer');
+      } else {
+        router.push('/dashboard/attendee');
+      }
     } catch (err) {
       console.error('Registration error:', err);
       setError(getErrorMessage(err));

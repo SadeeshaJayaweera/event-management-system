@@ -31,7 +31,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                                     <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className={`w-full h-full flex items-center justify-center text-white font-bold text-lg
-                    ${index % 3 === 0 ? 'bg-indigo-600' : index % 3 === 1 ? 'bg-purple-600' : 'bg-pink-600'}
+                    ${index % 3 === 0 ? 'bg-gradient-to-br from-indigo-500 to-purple-600' : index % 3 === 1 ? 'bg-gradient-to-br from-orange-500 to-red-500' : 'bg-gradient-to-br from-blue-500 to-cyan-500'}
                   `}>
                                         {event.category ? event.category.charAt(0) : event.title.charAt(0)}
                                     </div>
@@ -69,11 +69,8 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
             </div>
 
             <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-                <Link href="/my-events" className="text-indigo-600 text-sm font-semibold hover:text-indigo-800 transition-colors inline-flex items-center">
+                <Link href="/dashboard/organizer/events" className="text-indigo-600 text-sm font-semibold hover:text-indigo-800 transition-colors inline-flex items-center">
                     View All Events
-                    <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
                 </Link>
             </div>
         </div>
