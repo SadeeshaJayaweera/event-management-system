@@ -31,7 +31,7 @@ export function Checkout({ event, onBack }: CheckoutProps) {
             const form = document.createElement("form");
             form.method = "POST";
             // Check if sandbox ID is used to determine URL
-            const isSandbox = paymentData.merchant_id === "4OVyblY3OxU4JH5EsPSamH3PT";
+            const isSandbox = paymentData.merchant_id === "1234081";
             form.action = paymentData.action_url || (isSandbox ? "https://sandbox.payhere.lk/pay/checkout" : "https://www.payhere.lk/pay/checkout");
 
             // Save pending purchase details for success page/verification
