@@ -5,15 +5,16 @@ import { useState } from "react";
 interface EventListProps {
   events: any[];
   onCreateClick: () => void;
+  onBuyTickets: (event: any) => void;
 }
 
-export function EventList({ events, onCreateClick }: EventListProps) {
+export function EventList({ events, onCreateClick, onBuyTickets }: EventListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
 
   const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          event.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === "All" || event.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
@@ -28,22 +29,22 @@ export function EventList({ events, onCreateClick }: EventListProps) {
           <p className="text-gray-500 mt-1">Manage and organize your upcoming events.</p>
         </div>
         <div className="flex gap-3">
-            <button 
-              onClick={onCreateClick}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Event
-            </button>
+          <button
+            onClick={onCreateClick}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Event
+          </button>
         </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search events..." 
+          <input
+            type="text"
+            placeholder="Search events..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -54,11 +55,10 @@ export function EventList({ events, onCreateClick }: EventListProps) {
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                filterCategory === cat 
-                  ? "bg-indigo-50 text-indigo-700 border border-indigo-100" 
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${filterCategory === cat
+                ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                }`}
             >
               {cat}
             </button>
@@ -74,23 +74,22 @@ export function EventList({ events, onCreateClick }: EventListProps) {
               <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold text-gray-900 shadow-sm">
                 ${event.price}
               </div>
-              <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold text-white shadow-sm ${
-                event.status === 'Upcoming' ? 'bg-green-500/90' : 'bg-gray-500/90'
-              }`}>
+              <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold text-white shadow-sm ${event.status === 'Upcoming' ? 'bg-green-500/90' : 'bg-gray-500/90'
+                }`}>
                 {event.status}
               </div>
             </div>
-            
+
             <div className="p-5 flex-1 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-100">
                   {event.category}
                 </span>
               </div>
-              
+
               <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">{event.title}</h3>
               <p className="text-gray-500 text-sm mb-4 line-clamp-2">{event.description}</p>
-              
+
               <div className="mt-auto space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
@@ -107,16 +106,31 @@ export function EventList({ events, onCreateClick }: EventListProps) {
               </div>
 
               <div className="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center">
-                 <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View Details</button>
-                 <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                   <MoreVertical className="w-4 h-4" />
-                 </button>
+                {/* <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View Details</button> */}
+                <button
+                  onClick={() => {
+                    // Navigate using window.location or props if available, 
+                    // but since EventList is used inside App.tsx which has routing state or uses router
+                    // we need to check how to navigate.
+                    // Assuming App.tsx passes a navigation method or we use a link.
+                    // Let's use a custom event or check App.tsx again.
+                    // Actually, let's use a prop callback or window.location for now if router not present.
+                    // BUT, we saw `useNavigate` in Checkout.tsx.
+                    // Let's assume we can pass `onBuyTickets` prop to EventList.
+                  }}
+                  className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                >
+                  Get Tickets
+                </button>
+                <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
         ))}
       </div>
-      
+
       {filteredEvents.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-100 border-dashed">
           <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">

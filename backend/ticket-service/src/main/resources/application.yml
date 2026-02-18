@@ -24,3 +24,8 @@ eureka:
   instance:
     preferIpAddress: true
 
+payhere:
+  merchant-id: "4OVyblY3OxU4JH5EsPSamH3PT" # Sandbox App ID
+  merchant-secret: "8n3CHVpDyTM4DtRbSNAi5W8bUBU60MMkg8gleLRI8yxu" # Sandbox App Secret
+  mode: sandbox
+
