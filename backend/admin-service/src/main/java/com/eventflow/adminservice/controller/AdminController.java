@@ -90,13 +90,13 @@ public class AdminController {
   @PutMapping("/users/{id}/ban")
   public ResponseEntity<Void> banUser(@PathVariable UUID id) {
     adminUserService.banUser(id);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/users/{id}/unban")
   public ResponseEntity<Void> unbanUser(@PathVariable UUID id) {
     adminUserService.unbanUser(id);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
   }
 
   @ExceptionHandler(Exception.class)

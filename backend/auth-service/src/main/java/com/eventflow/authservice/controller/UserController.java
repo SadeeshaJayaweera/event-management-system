@@ -36,13 +36,13 @@ public class UserController {
   @PutMapping("/{id}/ban")
   public ResponseEntity<Void> banUser(@PathVariable UUID id) {
     userService.banUser(id);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/{id}/unban")
   public ResponseEntity<Void> unbanUser(@PathVariable UUID id) {
     userService.unbanUser(id);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
   }
 
   @ExceptionHandler(IllegalArgumentException.class)

@@ -45,6 +45,10 @@ public class AuthService {
       throw new IllegalArgumentException("Invalid credentials");
     }
 
+    if ("banned".equals(user.getStatus())) {
+      throw new IllegalArgumentException("Your account has been banned. Please contact support.");
+    }
+
     return new AuthResponse(user.getId(), user.getName(), user.getRole(), issueToken(user));
   }
 
