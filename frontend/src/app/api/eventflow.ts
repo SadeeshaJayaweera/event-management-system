@@ -1,6 +1,6 @@
 import { apiRequest } from "./client";
 
-export type UserRole = "organizer" | "attendee";
+export type UserRole = "organizer" | "attendee" | "admin";
 
 export interface AuthResponse {
   userId: string;
@@ -143,5 +143,44 @@ export const analyticsApi = {
       revenue: Math.floor(Math.random() * 5000) + 1000,
     }));
   },
+};
+
+export interface DashboardStats {
+  totalEvents: number;
+  upcomingEvents: number;
+  completedEvents: number;
+  totalUsers: number;
+  totalAttendees: number;
+  totalTicketsSold: number;
+}
+
+export interface UserResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+}
+
+export const adminApi = {
+  getDashboardStats: () => apiRequest<DashboardStats>("/api/admin/dashboard/stats"),
+  
+  // Event Management
+  getAllEvents: () => apiRequest<EventItem[]>("/api/admin/events"),
+  getEvent: (id: string) => apiRequest<EventItem>(`/api/admin/events/${id}`),
+  updateEvent: (id: string, payload: Partial<EventItem>) =>
+    apiRequest<EventItem>(`/api/admin/events/${id}`, { method: "PUT", body: payload }),
+  deleteEvent: (id: string) =>
+    apiRequest<void>(`/api/admin/events/${id}`, { method: "DELETE" }),
+
+  // User Management
+  getAllUsers: () => apiRequest<UserResponse[]>("/api/admin/users"),
+  getUser: (id: string) => apiRequest<UserResponse>(`/api/admin/users/${id}`),
+  deleteUser: (id: string) =>
+    apiRequest<void>(`/api/admin/users/${id}`, { method: "DELETE" }),
+  banUser: (id: string) =>
+    apiRequest<void>(`/api/admin/users/${id}/ban`, { method: "PUT" }),
+  unbanUser: (id: string) =>
+    apiRequest<void>(`/api/admin/users/${id}/unban`, { method: "PUT" }),
 };
 

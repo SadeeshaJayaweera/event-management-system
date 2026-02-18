@@ -49,5 +49,9 @@ public class TicketService {
     ticket.setStatus(request.getStatus());
     return ticketRepository.save(ticket);
   }
+
+  public long count() {
+    return ticketRepository.count();
+  }
 }
 

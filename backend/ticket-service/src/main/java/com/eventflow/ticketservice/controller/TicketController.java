@@ -45,6 +45,11 @@ public class TicketController {
     return ticketService.list(eventId, attendeeId).stream().map(this::toResponse).toList();
   }
 
+  @GetMapping("/count")
+  public ResponseEntity<Long> count() {
+    return ResponseEntity.ok(ticketService.count());
+  }
+
   @PatchMapping("/{id}/status")
   public ResponseEntity<TicketResponse> updateStatus(@PathVariable UUID id,
                                                      @Valid @RequestBody TicketStatusUpdateRequest request) {

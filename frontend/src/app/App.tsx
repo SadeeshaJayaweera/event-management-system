@@ -8,6 +8,7 @@ import { LandingPage } from "./components/LandingPage";
 import { AuthPage } from "./components/AuthPage";
 import { AttendeeDashboard } from "./components/AttendeeDashboard";
 import { CreateEvent } from "./components/CreateEvent";
+import { AdminDashboard } from "./components/AdminDashboard";
 import { HealthCheck } from "./components/HealthCheck";
 import { Menu, Calendar } from "lucide-react";
 import { Toaster, toast } from "sonner";
@@ -83,11 +84,19 @@ export default function App() {
   };
 
   const renderOrganizerContent = () => {
+    // Prevent non-admin users from accessing admin panel
+    if (activeTab === "admin" && user?.role !== "admin") {
+      setActiveTab("dashboard");
+      toast.error("Access denied: Admin privileges required");
+      return <Dashboard events={events} />;
+    }
+
     switch (activeTab) {
       case "dashboard": return <Dashboard events={events} />;
       case "events": return <EventList events={events} onCreateClick={() => setActiveTab("create-event")} />;
       case "create-event": return <CreateEvent onSave={handleCreateEvent} onCancel={() => setActiveTab("events")} />;
       case "attendees": return <Attendees />;
+      case "admin": return <AdminDashboard />;
       case "settings": return <Settings />;
       default: return <Dashboard events={events} />;
     }
@@ -110,12 +119,12 @@ export default function App() {
       return <AttendeeDashboard user={user} onLogout={handleLogout} />;
     }
 
-    // Organizer View
+    // Organizer and Admin View
     return (
       <div className="min-h-screen bg-gray-50 flex font-sans text-gray-900">
         {/* Sidebar for Desktop */}
         <div className="hidden md:block fixed left-0 top-0 bottom-0 w-64 z-10 shadow-sm">
-          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} userRole={user?.role} />
         </div>
 
         {/* Mobile Header */}
@@ -136,7 +145,7 @@ export default function App() {
           <div className="fixed inset-0 z-30 md:hidden">
             <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
             <div className="absolute top-0 bottom-0 left-0 w-64 bg-white shadow-xl animate-in slide-in-from-left duration-300">
-               <Sidebar activeTab={activeTab} setActiveTab={(tab) => { setActiveTab(tab); setIsMobileMenuOpen(false); }} onLogout={handleLogout} />
+               <Sidebar activeTab={activeTab} setActiveTab={(tab) => { setActiveTab(tab); setIsMobileMenuOpen(false); }} onLogout={handleLogout} userRole={user?.role} />
             </div>
           </div>
         )}
