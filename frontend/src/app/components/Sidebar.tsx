@@ -24,12 +24,12 @@ export function Sidebar({ activeTab, setActiveTab, onLogout, userRole }: Sidebar
 
   return (
     <div className="h-full w-full flex flex-col bg-white border-r border-gray-200">
-      <div className="p-6 flex items-center space-x-2">
+      <a href="/" className="p-6 flex items-center space-x-2 hover:bg-gray-50 transition-colors">
         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
           <Calendar className="text-white w-5 h-5" />
         </div>
         <span className="text-xl font-bold text-gray-900">EventFlow</span>
-      </div>
+      </a>
 
       <div className="flex-1 px-4 py-4 space-y-1">
         {menuItems.map((item) => (

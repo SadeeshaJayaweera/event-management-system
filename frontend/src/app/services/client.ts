@@ -19,11 +19,27 @@ console.log("🔧 VITE_API_URL:", import.meta.env.VITE_API_URL || 'not set');
 
 type RequestOptions = Omit<RequestInit, "body"> & { body?: unknown };
 
+// Token storage - will be set by AuthContext
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
+
+export function getAuthToken(): string | null {
+  return authToken;
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...options.headers,
   };
+
+  // Inject auth token if available
+  if (authToken) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${authToken}`;
+  }
 
   const url = `${API_BASE_URL}${path}`;
   console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { adminApi, type DashboardStats, type EventItem, type UserResponse } from "../api/eventflow";
+import { adminApi, type DashboardStats, type EventItem, type UserResponse } from "../services/eventflow";
 import { 
   Calendar, Users, Ticket, TrendingUp, 
   Edit, Trash2, Ban, UserX, CheckCircle, 

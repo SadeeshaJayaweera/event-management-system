@@ -1,5 +1,5 @@
 
-import { ATTENDEES } from "../data/mockData";
+import { ATTENDEES } from "../shared/mockData";
 import { Search, Mail, Calendar, CheckCircle, Clock, XCircle, MoreHorizontal, Download, UserCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
