@@ -1,10 +1,11 @@
 package com.eventflow.analyticsservice.dto;
 
 public class RevenuePoint {
-  private String name;
-  private int revenue;
 
-  public RevenuePoint(String name, int revenue) {
+  private String name;
+  private double revenue;
+
+  public RevenuePoint(String name, double revenue) {
     this.name = name;
     this.revenue = revenue;
   }
@@ -13,8 +14,7 @@ public class RevenuePoint {
     return name;
   }
 
-  public int getRevenue() {
+  public double getRevenue() {
     return revenue;
   }
 }
-
