@@ -1,14 +1,15 @@
 
-import { Calendar, Home, Users, Settings, LogOut, PlusCircle } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogOut, PlusCircle, Shield } from "lucide-react";
 import clsx from "clsx";
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onLogout?: () => void;
+  userRole?: string;
 }
 
-export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, onLogout, userRole }: SidebarProps) {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "events", label: "Events", icon: Calendar },
@@ -16,14 +17,19 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
+  // Add admin option only for users with admin role
+  if (userRole === "admin") {
+    menuItems.splice(3, 0, { id: "admin", label: "Admin Panel", icon: Shield });
+  }
+
   return (
     <div className="h-full w-full flex flex-col bg-white border-r border-gray-200">
-      <div className="p-6 flex items-center space-x-2">
+      <a href="/" className="p-6 flex items-center space-x-2 hover:bg-gray-50 transition-colors">
         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
           <Calendar className="text-white w-5 h-5" />
         </div>
         <span className="text-xl font-bold text-gray-900">EventFlow</span>
-      </div>
+      </a>
 
       <div className="flex-1 px-4 py-4 space-y-1">
         {menuItems.map((item) => (

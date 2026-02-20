@@ -46,5 +46,9 @@ public class AttendeeService {
     attendee.setStatus(request.getStatus());
     return attendeeRepository.save(attendee);
   }
+
+  public long count() {
+    return attendeeRepository.count();
+  }
 }
 

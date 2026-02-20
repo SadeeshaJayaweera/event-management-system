@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
-import { analyticsApi, type AnalyticsOverview, type EventItem, type RevenuePoint } from "../api/eventflow";
+import { analyticsApi, eventApi, type AnalyticsOverview, type EventItem, type RevenuePoint } from "../services/eventflow";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Calendar, Clock, MapPin, DollarSign, Users, TrendingUp } from "lucide-react";
-
-interface DashboardProps {
-  events: EventItem[];
-}
+import { toast } from "sonner";
 
 const fallbackRevenue = [
   { name: "Jan", revenue: 4000 },
@@ -17,25 +14,32 @@ const fallbackRevenue = [
   { name: "Jul", revenue: 3490 },
 ];
 
-export function Dashboard({ events }: DashboardProps) {
+export function Dashboard() {
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [revenue, setRevenue] = useState<RevenuePoint[]>(fallbackRevenue);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadAnalytics = async () => {
+    const loadData = async () => {
       try {
-        const [overviewData, revenueData] = await Promise.all([
+        const [eventsData, overviewData, revenueData] = await Promise.all([
+          eventApi.list(),
           analyticsApi.overview(),
           analyticsApi.revenue(),
         ]);
+        setEvents(eventsData);
         setOverview(overviewData);
         setRevenue(revenueData);
       } catch (error) {
         console.error(error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadAnalytics();
+    loadData();
   }, []);
 
   const stats = overview

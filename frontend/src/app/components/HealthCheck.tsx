@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_BASE_URL } from '../api/client';
+import { API_BASE_URL } from '../services/client';
 
 interface HealthStatus {
   service: string;

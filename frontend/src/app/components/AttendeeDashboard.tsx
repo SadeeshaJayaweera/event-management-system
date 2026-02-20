@@ -1,15 +1,14 @@
 import { eventApi, ticketApi, type EventItem, type TicketItem } from "../api/eventflow";
 import { Search, Calendar, MapPin, Heart, Ticket, LogOut, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { toast } from "sonner";
+import { useAuth } from "../contexts/AuthContext";
 
-interface AttendeeDashboardProps {
-  user: { id: string; name: string; role: string };
-  onLogout: () => void;
-}
-
-export function AttendeeDashboard({ user, onLogout }: AttendeeDashboardProps) {
+export function AttendeeDashboard() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'discover' | 'tickets'>('discover');
   const [searchTerm, setSearchTerm] = useState("");
   const [likedEvents, setLikedEvents] = useState<string[]>([]);
@@ -17,6 +16,8 @@ export function AttendeeDashboard({ user, onLogout }: AttendeeDashboardProps) {
   const [myTickets, setMyTickets] = useState<EventItem[]>([]);
 
   useEffect(() => {
+    if (!user) return;
+    
     const loadData = async () => {
       try {
         const [eventsData, ticketsData]: [EventItem[], TicketItem[]] = await Promise.all([
@@ -35,7 +36,7 @@ export function AttendeeDashboard({ user, onLogout }: AttendeeDashboardProps) {
     };
 
     void loadData();
-  }, [user.id]);
+  }, [user?.id]);
 
   const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -54,6 +55,11 @@ export function AttendeeDashboard({ user, onLogout }: AttendeeDashboardProps) {
   };
 
   const handleBuyTicket = async (event: EventItem) => {
+    if (!user) {
+      toast.error("Please log in to purchase tickets");
+      return;
+    }
+
     if (myTickets.some((ticket) => ticket.id === event.id)) {
       toast.error("You already have a ticket for this event!");
       setActiveTab('tickets');
@@ -80,12 +86,12 @@ export function AttendeeDashboard({ user, onLogout }: AttendeeDashboardProps) {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-2">
+            <a href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <Calendar className="text-white w-5 h-5" />
               </div>
               <span className="text-xl font-bold text-gray-900">EventFlow</span>
-            </div>
+            </a>
             
             <div className="hidden md:flex items-center space-x-8">
               <button 
@@ -107,11 +113,17 @@ export function AttendeeDashboard({ user, onLogout }: AttendeeDashboardProps) {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm border border-indigo-200">
-                  {user.name.charAt(0)}
+                  {user?.name.charAt(0)}
                 </div>
-                <span className="text-sm font-medium text-gray-700 hidden sm:block">{user.name}</span>
+                <span className="text-sm font-medium text-gray-700 hidden sm:block">{user?.name}</span>
               </div>
-              <button onClick={onLogout} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-full transition-colors">
+              <button 
+                onClick={() => {
+                  logout();
+                  navigate('/');
+                }} 
+                className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
                 <LogOut className="w-5 h-5" />
               </button>
             </div>

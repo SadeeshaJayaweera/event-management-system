@@ -1,21 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { User, Calendar, ArrowLeft, Mail, Lock, UserCircle } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
-import { authApi, type AuthResponse } from "../api/eventflow";
+import { useAuth } from "../contexts/AuthContext";
+import { UserRole } from "../services/eventflow";
 
-interface AuthPageProps {
-  onLogin: (response: AuthResponse) => void;
-  onBack: () => void;
-}
-
-export function AuthPage({ onLogin, onBack }: AuthPageProps) {
-  const [isLogin, setIsLogin] = useState(true);
+export function AuthPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { login, register, isAuthenticated, user } = useAuth();
+  
+  const mode = searchParams.get('mode');
+  const [isLogin, setIsLogin] = useState(mode !== 'register');
   const [role, setRole] = useState<'organizer' | 'attendee'>('organizer');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Update isLogin state when URL changes
+  useEffect(() => {
+    if (mode === 'register') {
+      setIsLogin(false);
+    } else if (mode === 'login') {
+      setIsLogin(true);
+    }
+  }, [mode]);
+
+  // Redirect if already authenticated
+  if (isAuthenticated && user) {
+    const dashboards: Record<UserRole, string> = {
+      attendee: '/attendee',
+      organizer: '/dashboard',
+      admin: '/dashboard',
+    };
+    return <Navigate to={dashboards[user.role]} replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,13 +56,11 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
     setLoading(true);
     try {
       if (isLogin) {
-        const response = await authApi.login({ email, password });
-        onLogin(response);
-        toast.success("Logged in successfully!");
+        await login(email, password);
+        // Navigation will happen automatically via the Navigate component above
       } else {
-        const response = await authApi.register({ name, email, password, role });
-        onLogin(response);
-        toast.success("Account created successfully!");
+        await register(name, email, password, role);
+        // Navigation will happen automatically via the Navigate component above
       }
     } catch (error) {
       console.error(error);
@@ -80,9 +99,15 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
           {isLogin ? "Sign in to your account" : "Create your account"}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Or{" "}
-          <button onClick={() => setIsLogin(!isLogin)} className="font-medium text-indigo-600 hover:text-indigo-500">
-            {isLogin ? "start your 14-day free trial" : "sign in to existing account"}
+          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+          <button 
+            onClick={() => {
+              setIsLogin(!isLogin);
+              navigate(`/auth?mode=${isLogin ? 'register' : 'login'}`);
+            }} 
+            className="font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            {isLogin ? "Create one for free" : "Sign in instead"}
           </button>
         </p>
       </div>
@@ -185,7 +210,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
 
           <div className="mt-6">
             <button
-              onClick={onBack}
+              onClick={() => navigate('/')}
               className="w-full flex items-center justify-center text-sm text-gray-500 hover:text-gray-900"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />

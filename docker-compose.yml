@@ -87,6 +87,21 @@ services:
     networks:
       - event-network
 
+  admin-service:
+    build: ./backend/admin-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      - discovery
+      - event-service
+      - auth-service
+      - attendee-service
+      - ticket-service
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    networks:
+      - event-network
+
   frontend:
     build: ./frontend
     ports:

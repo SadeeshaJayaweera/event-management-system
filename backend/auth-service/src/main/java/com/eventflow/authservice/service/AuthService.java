@@ -31,6 +31,7 @@ public class AuthService {
     user.setEmail(request.getEmail());
     user.setRole(request.getRole());
     user.setPasswordHash(encoder.encode(request.getPassword()));
+    user.setStatus("active");
 
     User saved = userRepository.save(user);
     return new AuthResponse(saved.getId(), saved.getName(), saved.getRole(), issueToken(saved));
@@ -42,6 +43,10 @@ public class AuthService {
 
     if (!encoder.matches(request.getPassword(), user.getPasswordHash())) {
       throw new IllegalArgumentException("Invalid credentials");
+    }
+
+    if ("banned".equals(user.getStatus())) {
+      throw new IllegalArgumentException("Your account has been banned. Please contact support.");
     }
 
     return new AuthResponse(user.getId(), user.getName(), user.getRole(), issueToken(user));

@@ -34,6 +34,11 @@ public class AttendeeController {
     return attendeeService.list(eventId).stream().map(this::toResponse).toList();
   }
 
+  @GetMapping("/count")
+  public ResponseEntity<Long> count() {
+    return ResponseEntity.ok(attendeeService.count());
+  }
+
   @GetMapping("/{id}")
   public AttendeeResponse get(@PathVariable UUID id) {
     return toResponse(attendeeService.get(id));

@@ -1,13 +1,31 @@
 
 import { Search, MoreVertical, Calendar, MapPin, Users, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { eventApi, type EventItem } from "../services/eventflow";
+import { toast } from "sonner";
+import { EventCardSkeleton } from "./LoadingSpinner";
 
-interface EventListProps {
-  events: any[];
-  onCreateClick: () => void;
-}
+export function EventList() {
+  const navigate = useNavigate();
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export function EventList({ events, onCreateClick }: EventListProps) {
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const data = await eventApi.list();
+        setEvents(data);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load events");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
 
@@ -29,7 +47,7 @@ export function EventList({ events, onCreateClick }: EventListProps) {
         </div>
         <div className="flex gap-3">
             <button 
-              onClick={onCreateClick}
+              onClick={() => navigate('/dashboard/events/create')}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center"
             >
               <Plus className="w-4 h-4 mr-2" />
