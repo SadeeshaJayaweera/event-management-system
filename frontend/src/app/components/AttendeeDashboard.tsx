@@ -1,4 +1,4 @@
-import { eventApi, ticketApi, type EventItem, type TicketItem } from "../api/eventflow";
+import { eventApi, ticketApi, type EventItem, type TicketItem } from "../services/eventflow";
 import { Search, Calendar, MapPin, Heart, Ticket, LogOut, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
