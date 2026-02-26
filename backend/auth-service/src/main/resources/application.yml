@@ -26,3 +26,6 @@ eureka:
   instance:
     preferIpAddress: true
 
+jwt:
+  secret: bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=
+  expiration: 86400000 # 24 hours in milliseconds

@@ -7,23 +7,23 @@ set -e
 
 echo "🔨 Building Event Management System..."
 
-# Build Discovery Server
-echo "📦 Building Discovery Server..."
-cd discovery
+# Build Eureka Server (Service Discovery)
+echo "📦 Building Eureka Server..."
+cd backend/eureka-server
 mvn clean package -DskipTests
-cd ..
+cd ../..
 
 # Build Config Server
 echo "📦 Building Config Server..."
-cd config-server
+cd backend/config-server
 mvn clean package -DskipTests
-cd ..
+cd ../..
 
 # Build API Gateway
 echo "📦 Building API Gateway..."
-cd gateway
+cd backend/api-gateway
 mvn clean package -DskipTests
-cd ..
+cd ../..
 
 # Build Event Service
 echo "📦 Building Event Service..."

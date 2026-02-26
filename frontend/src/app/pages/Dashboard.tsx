@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { analyticsApi, eventApi, type AnalyticsOverview, type EventItem, type RevenuePoint } from "../services/eventflow";
+import { analyticsApi, eventApi, attendeeApi, type AnalyticsOverview, type EventItem, type RevenuePoint, type AttendeeItem } from "../services/eventflow";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Calendar, Clock, MapPin, DollarSign, Users, TrendingUp } from "lucide-react";
+import { Calendar, Clock, MapPin, DollarSign, Users, TrendingUp, Mail, User } from "lucide-react";
 import { toast } from "sonner";
 
 const fallbackRevenue = [
@@ -19,6 +19,8 @@ export function Dashboard() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [revenue, setRevenue] = useState<RevenuePoint[]>(fallbackRevenue);
   const [loading, setLoading] = useState(true);
+  const [eventAttendees, setEventAttendees] = useState<Record<string, AttendeeItem[]>>({});
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,6 +33,21 @@ export function Dashboard() {
         setEvents(eventsData);
         setOverview(overviewData);
         setRevenue(revenueData);
+
+        // Fetch attendees for each event
+        const attendeesMap: Record<string, AttendeeItem[]> = {};
+        await Promise.all(
+          eventsData.map(async (event) => {
+            try {
+              const attendees = await attendeeApi.list(event.id);
+              attendeesMap[event.id] = attendees;
+            } catch (error) {
+              console.error(`Failed to load attendees for event ${event.id}`, error);
+              attendeesMap[event.id] = [];
+            }
+          })
+        );
+        setEventAttendees(attendeesMap);
       } catch (error) {
         console.error(error);
         toast.error("Failed to load dashboard data");
@@ -126,6 +143,108 @@ export function Dashboard() {
           <button className="w-full mt-6 py-2 text-sm text-indigo-600 font-medium hover:text-indigo-800 transition-colors">
             View All Events
           </button>
+        </div>
+      </div>
+
+      {/* Event Attendees Section */}
+      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold text-gray-900">Event Attendees</h2>
+          <span className="text-sm text-gray-500">{events.length} events</span>
+        </div>
+
+        <div className="space-y-4">
+          {events.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>No events yet. Create your first event to start managing attendees.</p>
+            </div>
+          ) : (
+            events.map((event) => {
+              const attendees = eventAttendees[event.id] || [];
+              const isExpanded = expandedEvent === event.id;
+
+              return (
+                <div key={event.id} className="border border-gray-200 rounded-lg overflow-hidden transition-all">
+                  <button
+                    onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
+                    className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      {event.imageUrl && (
+                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                          <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 truncate">{event.title}</h3>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                          <div className="flex items-center">
+                            <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                            {event.date}
+                          </div>
+                          <div className="flex items-center">
+                            <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                            {event.location}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full">
+                          <Users className="w-4 h-4" />
+                          <span className="font-semibold text-sm">{attendees.length}</span>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 bg-gray-50 p-4">
+                      {attendees.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                          <p className="text-sm">No attendees registered yet</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {attendees.map((attendee) => (
+                            <div
+                              key={attendee.id}
+                              className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                  <User className="w-5 h-5 text-indigo-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-gray-900 truncate">{attendee.name}</h4>
+                                  <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+                                    <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                                    <span className="truncate">{attendee.email}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    Registered: {new Date(attendee.registeredAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

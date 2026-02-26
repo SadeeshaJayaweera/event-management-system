@@ -4,23 +4,23 @@ REM This script builds all services
 
 echo Building Event Management System...
 
-REM Build Discovery Server
-echo Building Discovery Server...
-cd discovery
+REM Build Eureka Server (Service Discovery)
+echo Building Eureka Server...
+cd backend\eureka-server
 call mvn clean package -DskipTests
-cd ..
+cd ..\..
 
 REM Build Config Server
 echo Building Config Server...
-cd config-server
+cd backend\config-server
 call mvn clean package -DskipTests
-cd ..
+cd ..\..
 
 REM Build API Gateway
 echo Building API Gateway...
-cd gateway
+cd backend\api-gateway
 call mvn clean package -DskipTests
-cd ..
+cd ..\..
 
 REM Build Event Service
 echo Building Event Service...

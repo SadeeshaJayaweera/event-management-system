@@ -5,17 +5,28 @@ import com.eventflow.authservice.dto.LoginRequest;
 import com.eventflow.authservice.dto.RegisterRequest;
 import com.eventflow.authservice.model.User;
 import com.eventflow.authservice.repository.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Base64;
+import javax.crypto.SecretKey;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class AuthService {
   private final UserRepository userRepository;
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+  
+  @Value("${jwt.secret:bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=}")
+  private String secretKey;
+  
+  @Value("${jwt.expiration:86400000}") // 24 hours in milliseconds
+  private long jwtExpiration;
 
   public AuthService(UserRepository userRepository) {
     this.userRepository = userRepository;
@@ -53,8 +64,25 @@ public class AuthService {
   }
 
   private String issueToken(User user) {
-    String payload = user.getId() + ":" + user.getRole() + ":" + Instant.now().toEpochMilli();
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("userId", user.getId().toString()); // Convert UUID to String
+    claims.put("role", user.getRole());
+    
+    Date now = new Date();
+    Date expiration = new Date(now.getTime() + jwtExpiration);
+    
+    return Jwts.builder()
+            .claims(claims)
+            .subject(user.getEmail())
+            .issuedAt(now)
+            .expiration(expiration)
+            .signWith(getSignInKey())
+            .compact();
+  }
+  
+  private SecretKey getSignInKey() {
+    byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+    return Keys.hmacShaKeyFor(keyBytes);
   }
 }
 

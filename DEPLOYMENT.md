@@ -223,15 +223,18 @@ event-management-system/
 │   ├── package.json
 │   └── vite.config.ts
 ├── backend/                    # Spring Boot microservices
+│   ├── config-server/         # Spring Cloud Config Server (Port 8888)
+│   ├── eureka-server/         # Eureka Service Discovery (Port 8761)
+│   ├── api-gateway/           # API Gateway with JWT Auth (Port 8080)
+│   ├── auth-service/
 │   ├── user-service/
 │   ├── event-service/
-│   ├── booking-service/
+│   ├── attendee-service/
+│   ├── ticket-service/
 │   ├── notification-service/
-│   ├── payment-service/
-│   └── review-service/
-├── gateway/                    # API Gateway
-├── discovery/                  # Eureka Service Discovery
-├── config-server/             # Spring Cloud Config (optional)
+│   ├── analytics-service/
+│   └── admin-service/
+├── config-repo/               # Centralized configuration repository
 └── docker-compose.yml         # Orchestration configuration
 ```
 

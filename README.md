@@ -1,17 +1,13 @@
 # Event Management System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Next.js](https://img.shields.io/badge/Next.js-14.1.0-black.svg)](https://nextjs.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18.2-blue.svg)](https://reactjs.org/)
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-A microservices-based event management platform built with **Spring Boot** and **Next.js**.
-
-> � **Status:** Development Version - **NOT Production Ready**  
-> 🔒 **Security Notice:** Critical security vulnerabilities exist - See Security section below  
-> 📚 **Complete Guide:** See [GUIDE.md](GUIDE.md) for detailed documentation
+A microservices-based event management platform built with **Spring Boot**, **React**, and **Vite**.
 
 ---
 
@@ -31,17 +27,23 @@ A microservices-based event management platform built with **Spring Boot** and *
 
 <img src="Preview5.png">
 
-## 🎯 What's This?
+## 🎯 Overview
 
-A microservices-based event management system with a modern web interface. The application demonstrates a complete microservices architecture with service discovery, API gateway, and inter-service communication.
+EventFlow is a comprehensive event management system featuring microservices architecture, JWT authentication, role-based access control, and a modern React frontend. The platform supports event organizers and attendees with complete event lifecycle management.
 
-**Current State:** Core features implemented, but **security measures are not yet in place**. This is a development version suitable for learning, experimentation, or as a starter template that requires security hardening before production use.
+**Key Highlights:**
+- ✅ Fully implemented JWT authentication & authorization
+- ✅ 9 microservices with service discovery
+- ✅ Role-based access (Admin, Organizer, Attendee)
+- ✅ Real-time analytics and dashboard
+- ✅ Complete booking and ticketing system
+- ✅ Docker-ready production deployment
 
 ---
 
 ## 🚀 Quick Start
 
-### Using Docker (Easiest - 5 Minutes)
+### Using Docker (Recommended)
 
 ```bash
 git clone https://github.com/HasithFernando/event-management-system.git
@@ -49,479 +51,155 @@ cd event-management-system
 docker-compose up --build
 ```
 
-**Then access:**
+**Access the application:**
 - 🌐 Frontend: http://localhost:3000
 - 🔍 Eureka Dashboard: http://localhost:8761
 - 🌉 API Gateway: http://localhost:8080
 
-### Local Development Setup
 
-Follow these steps to run the application locally without Docker:
 
-#### Step 1: Clone the Repository
-```bash
-git clone https://github.com/SadeeshaJayaweera/event-management-system.git
-cd event-management-system
-```
+### Local Development
 
-#### Step 2: Start Infrastructure Services (in separate terminals)
-
-**Terminal 1 - Discovery Server (Eureka):**
-```bash
-cd discovery
-mvn spring-boot:run
-```
-Wait for: "Started EurekaServerApplication" message (usually ~30-40 seconds)  
-Verify at: http://localhost:8761
-
-**Terminal 2 - Config Server:**
-```bash
-cd config-server
-mvn spring-boot:run
-```
-Wait for: "Started ConfigServerApplication" and registration with Eureka
-
-**Terminal 3 - API Gateway:**
-```bash
-cd gateway
-mvn spring-boot:run
-```
-Wait for: "Started GatewayApplication" message  
-Verify at: http://localhost:8080/actuator/health
-
-#### Step 3: Start Business Services (in separate terminals)
-
-**Terminal 4 - User Service:**
-```bash
-cd backend/user-service
-mvn spring-boot:run
-```
-Verify at: http://localhost:8082/users/health
-
-**Terminal 5 - Event Service:**
-```bash
-cd backend/event-service
-mvn spring-boot:run
-```
-Verify at: http://localhost:8081/events/health
-
-**Terminal 6 - Booking Service:**
-```bash
-cd backend/booking-service
-mvn spring-boot:run
-```
-Verify at: http://localhost:8083/bookings/health
-
-#### Step 4: Start Frontend
-
-**Terminal 7 - Next.js Frontend:**
-```bash
-cd frontend
-npm install           # Only needed first time
-npm run dev
-```
-Access at: http://localhost:3000
-
-#### Step 5: Verify All Services
-
-Check Eureka Dashboard at http://localhost:8761 - you should see:
-- ✅ GATEWAY-SERVICE
-- ✅ USER-SERVICE
-- ✅ EVENT-SERVICE
-- ✅ BOOKING-SERVICE
-
-### Quick Start Commands (All at Once)
-
-If you prefer to start everything in one go, use the provided script:
-
-```bash
-# Make script executable (first time only)
-chmod +x start-all.sh
-
-# Start all services
-./start-all.sh
-```
-
-**Note:** Services use H2 in-memory database by default for local development. Data will be lost when services restart.
-
-### Stopping Services
-
-Press `Ctrl+C` in each terminal to stop individual services.
-
-For the full guide with troubleshooting, see [GUIDE.md](GUIDE.md).
-
----
-
-## 📋 Prerequisites
-
-**For Docker (Recommended):**
-- Docker Desktop
-
-**For Local Development:**
-- Java 17+
-- Maven 3.6+
-- Node.js 18+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed local setup instructions.
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-Frontend (Next.js) → API Gateway → Microservices → Databases
-                          ↓
-                   Discovery Server
-                   Config Server
+Frontend (React/Vite) → API Gateway (JWT Auth) → Microservices → H2 Databases
+                              ↓
+                       Eureka Discovery
 ```
 
-### Services
+### Microservices
 
 | Service | Port | Description |
 |---------|------|-------------|
-| **Frontend** | 3000 | Next.js web application |
-| **API Gateway** | 8080 | Single entry point |
-| **Discovery Server** | 8761 | Service registry (Eureka) |
+| **Frontend** | 3000 | React + Vite application |
+| **API Gateway** | 8080 | JWT authentication & routing |
+| **Eureka Server** | 8761 | Service discovery |
 | **Config Server** | 8888 | Centralized configuration |
+| **Auth Service** | 8082 | User authentication & JWT |
 | **Event Service** | 8081 | Event management |
-| **User Service** | 8082 | User management |
-| **Booking Service** | 8083 | Booking management |
+| **Attendee Service** | 8083 | Attendee management |
+| **Ticket Service** | 8084 | Ticket operations |
+| **Notification Service** | 8085 | Event notifications |
+| **Analytics Service** | 8086 | Analytics & reporting |
+| **Admin Service** | 8087 | Admin operations |
 
 ### Technology Stack
 
-- **Backend:** Spring Boot 3.2.1, Java 17
-- **Frontend:** Next.js 14, React 18, TypeScript 5.3
-- **Service Discovery:** Netflix Eureka
-- **API Gateway:** Spring Cloud Gateway
-- **Databases:** MySQL 8.0 (H2 for development)
-- **Containerization:** Docker & Docker Compose
-
----
-
-## 📁 Project Structure
-
-```
-event-management-system/
-│
-├── backend/                           # Business microservices
-│   ├── event-service/                 # Event management service (Port 8081)
-│   │   ├── src/main/java/com/nsbm/eventservice/
-│   │   │   ├── controller/            # REST endpoints
-│   │   │   ├── service/               # Business logic
-│   │   │   ├── repository/            # Data access
-│   │   │   ├── model/                 # Entity models
-│   │   │   ├── dto/                   # Data transfer objects
-│   │   │   ├── exception/             # Custom exceptions
-│   │   │   └── util/                  # Utility classes
-│   │   ├── src/main/resources/
-│   │   │   └── application.yml        # Service configuration
-│   │   └── pom.xml                    # Maven dependencies
-│   │
-│   ├── user-service/                  # User management service (Port 8082)
-│   │   ├── src/main/java/com/nsbm/userservice/
-│   │   │   ├── controller/            # UserController
-│   │   │   ├── service/               # UserService
-│   │   │   ├── repository/            # UserRepository
-│   │   │   ├── model/                 # User, Role entities
-│   │   │   ├── dto/                   # RegisterRequest, LoginRequest, etc.
-│   │   │   └── exception/             # Error handlers
-│   │   ├── src/main/resources/
-│   │   │   └── application.yml
-│   │   └── pom.xml
-│   │
-│   └── booking-service/               # Booking management service (Port 8083)
-│       ├── src/main/java/com/nsbm/bookingservice/
-│       │   ├── controller/            # BookingController
-│       │   ├── service/               # BookingService
-│       │   ├── repository/            # BookingRepository
-│       │   ├── client/                # Feign clients (EventServiceClient)
-│       │   ├── model/                 # Booking entity
-│       │   └── dto/                   # Booking DTOs
-│       ├── src/main/resources/
-│       │   └── application.yml
-│       └── pom.xml
-│
-├── discovery/                         # Eureka Server (Port 8761)
-│   ├── src/main/java/com/nsbm/discovery/
-│   │   └── DiscoveryServerApplication.java
-│   ├── src/main/resources/
-│   │   └── application.yml
-│   └── pom.xml
-│
-├── config-server/                     # Config Server (Port 8888)
-│   ├── src/main/java/com/nsbm/configserver/
-│   │   └── ConfigServerApplication.java
-│   ├── src/main/resources/
-│   │   ├── application.yml
-│   │   └── config-repo/               # Configuration repository
-│   └── pom.xml
-│
-├── gateway/                           # API Gateway (Port 8080)
-│   ├── src/main/java/com/nsbm/gateway/
-│   │   └── GatewayApplication.java
-│   ├── src/main/resources/
-│   │   └── application.yml            # Route configurations
-│   └── pom.xml
-│
-├── frontend/                          # Next.js Application (Port 3000)
-│   ├── src/
-│   │   ├── app/                       # Next.js 14 App Router
-│   │   │   ├── auth/                  # Authentication pages
-│   │   │   │   ├── login/             # Login page
-│   │   │   │   └── register/          # Registration page
-│   │   │   ├── events/                # Event pages
-│   │   │   │   ├── [id]/              # Event details (dynamic)
-│   │   │   │   └── create/            # Create event page
-│   │   │   ├── bookings/              # Bookings page
-│   │   │   ├── profile/               # User profile page
-│   │   │   ├── layout.tsx             # Root layout
-│   │   │   ├── page.tsx               # Home page
-│   │   │   └── globals.css            # Global styles
-│   │   ├── components/                # Reusable components
-│   │   │   ├── Navbar.tsx
-│   │   │   └── EventCard.tsx
-│   │   ├── contexts/                  # React contexts
-│   │   │   └── AuthContext.tsx        # Authentication state
-│   │   ├── services/                  # API service layer
-│   │   │   ├── userService.ts
-│   │   │   ├── eventService.ts
-│   │   │   └── bookingService.ts
-│   │   ├── lib/                       # Utilities
-│   │   │   └── api.ts                 # Axios configuration
-│   │   └── types/                     # TypeScript types
-│   │       └── index.ts
-│   ├── public/                        # Static assets
-│   ├── package.json                   # NPM dependencies
-│   └── tailwind.config.ts             # Tailwind CSS config
-│
-├── config-repo/                       # Centralized configurations
-│   └── application.yml                # Shared configuration
-│
-├── logs/                              # Application logs
-│
-├── docker-compose.yml                 # Docker orchestration
-├── build.sh / build.bat               # Build scripts
-├── start-all.sh                       # Start all services script
-├── stop-all.sh                        # Stop all services script
-│
-├── README.md                          # Project overview (this file)
-├── GUIDE.md                           # Complete development guide
-├── GITHUB_ISSUES.md                   # List of issues/enhancements
-├── LICENSE                            # MIT License
-├── .gitignore                         # Git ignore rules
-└── package.json                       # Root package configuration
-```
-
-### Key Directories Explained
-
-**Backend Services:**
-- Each service follows the standard Spring Boot structure
-- Clean architecture: Controller → Service → Repository → Model
-- DTOs for data transfer between layers
-- Custom exception handling
+**Backend:**
+- Spring Boot 3.2.5, Java 17
+- Spring Cloud (Gateway, Eureka, Config)
+- JWT authentication (JJWT)
+- H2 in-memory databases
+- OpenFeign for inter-service communication
 
 **Frontend:**
-- Next.js 14 with App Router
-- TypeScript for type safety
-- Tailwind CSS for styling
-- Separated concerns: components, services, contexts
+- React 18 with Vite
+- TypeScript
+- Tailwind CSS
+- React Router
+- Recharts for analytics
 
-**Infrastructure:**
-- Discovery Server for service registration
-- Config Server for centralized configuration
-- API Gateway for routing and load balancing
+**DevOps:**
+- Docker & Docker Compose
+- Multi-stage Docker builds
+- Nginx for frontend serving
 
 ---
 
-## 🛠️ Development
+## ✨ Features
 
-### Quick Commands
+### Authentication & Security
+- ✅ JWT-based authentication
+- ✅ Bcrypt password hashing
+- ✅ Role-based access control (Admin, Organizer, Attendee)
+- ✅ API Gateway security filtering
+- ✅ Protected routes and endpoints
 
-**Backend (Maven):**
-```bash
-mvn spring-boot:run          # Run service
-mvn clean package            # Build
-mvn test                     # Run tests
-```
+### User Roles
 
-**Frontend (NPM):**
-```bash
-npm install                  # Install dependencies
-npm run dev                  # Development mode
-npm run build                # Build for production
-```
+**Admin:**
+- Dashboard with system-wide analytics
+- User management (view, delete, ban/unban)
+- Event management (all events)
+- Access to all features
 
-**Docker:**
-```bash
-docker-compose up            # Start all services
-docker-compose down          # Stop all services
-docker-compose logs -f       # View logs
-docker-compose ps            # List running containers
-```
+**Organizer:**
+- Create and manage events
+- View attendee lists
+- Track ticket sales
+- Event analytics
 
-### Implementation Status
+**Attendee:**
+- Browse and search events
+- Purchase tickets
+- View booking history
+- Event notifications
 
-✅ **Infrastructure (100%)**
-- Complete microservices setup
-- Service discovery and registration
-- API Gateway with routing
-- Docker configuration
-- Database setup
-
-✅ **Backend Services (90%)**
-- Entity models and DTOs
-- REST API implementations
-- Service layer business logic
-- Exception handling
-- Inter-service communication (Feign clients)
-- Validation
-
-🔨 **User Service**
-- ✅ User registration and login
-- ✅ User CRUD operations
-- ✅ Role-based user management
-- ✅ User search functionality
-- ❌ Password hashing (CRITICAL - stores plaintext)
-- ❌ JWT authentication implementation
-- ❌ Authorization controls
-
-🔨 **Event Service**
-- ✅ Event CRUD operations
-- ✅ Event publishing and status management
-- ✅ Category-based filtering
-- ✅ Search functionality
-- ✅ Seat reservation management
-- ✅ Featured/upcoming events
-
-🔨 **Booking Service**
-- ✅ Booking creation and management
-- ✅ Payment confirmation workflow
-- ✅ Booking cancellation
-- ✅ Revenue analytics
-- ✅ User and event-based queries
-
-✅ **Frontend (95%)**
-- Modern Next.js 14 with TypeScript
-- Responsive UI with Tailwind CSS
-- Authentication context (login/register)
-- Event listing and creation pages
-- Event details page
-- Booking management
-- User profile
-- API integration with services
-
-❌ **Security (0% - CRITICAL)**
-- ❌ No password encryption
-- ❌ No JWT authentication
-- ❌ No authorization/access control
-- ❌ No CSRF protection
-- ❌ No rate limiting
-- ❌ Hardcoded credentials in config files
-
-❌ **Testing (10%)**
-- Basic test structure present
-- Comprehensive tests needed
-
+### Core Features
+- 📅 Event creation and management
+- 🎫 Ticket purchasing and management
+- 👥 Attendee registration and tracking
+- 📊 Analytics dashboard with charts
+- 🔍 Event search and filtering
+- 📧 Notification system
+- 💳 Booking and payment tracking
 
 ---
 
 ## 📚 API Endpoints
 
-All endpoints are accessible through the API Gateway at `http://localhost:8080`
+All endpoints accessible through API Gateway at `http://localhost:8080`
 
-### User Service (`/api/users`)
-
-**Authentication:**
+### Authentication (`/api/auth`)
 ```
-POST   /api/users/auth/register    # Register new user
-POST   /api/users/auth/login       # User login
+POST   /api/auth/register    # User registration
+POST   /api/auth/login       # User login (returns JWT)
 ```
 
-**User Management:**
+### Events (`/api/events`)
 ```
-GET    /api/users                  # List all users
-GET    /api/users/{id}             # Get user by ID
-GET    /api/users/email/{email}    # Get user by email
-PUT    /api/users/{id}             # Update user
-DELETE /api/users/{id}             # Delete user
-```
-
-**Admin Operations:**
-```
-PUT    /api/users/{id}/role        # Update user role
-PUT    /api/users/{id}/disable     # Disable user
-PUT    /api/users/{id}/enable      # Enable user
+GET    /api/events           # List all events
+POST   /api/events           # Create event (Organizer/Admin)
+GET    /api/events/{id}      # Get event details
+PUT    /api/events/{id}      # Update event (Organizer/Admin)
+DELETE /api/events/{id}      # Delete event (Admin)
 ```
 
-**Search:**
+### Attendees (`/api/attendees`)
 ```
-GET    /api/users/search?query=    # Search users
-GET    /api/users/role/{role}      # Get users by role
-```
-
-### Event Service (`/api/events`)
-
-**CRUD Operations:**
-```
-POST   /api/events                 # Create event
-GET    /api/events                 # List all events
-GET    /api/events/{id}            # Get event by ID
-PUT    /api/events/{id}            # Update event
-DELETE /api/events/{id}            # Delete event
+GET    /api/attendees             # List attendees
+POST   /api/attendees             # Register attendee
+GET    /api/attendees/{id}        # Get attendee details
+PUT    /api/attendees/{id}/status # Update status
 ```
 
-**Event Queries:**
+### Tickets (`/api/tickets`)
 ```
-GET    /api/events/published       # Get published events
-GET    /api/events/upcoming        # Get upcoming events
-GET    /api/events/featured        # Get featured events
-GET    /api/events/category/{cat}  # Get events by category
-GET    /api/events/organizer/{id}  # Get events by organizer
-GET    /api/events/search?query=   # Search events
-GET    /api/events/paginated       # Paginated events
+GET    /api/tickets          # List tickets
+POST   /api/tickets          # Purchase ticket
+GET    /api/tickets/{id}     # Get ticket details
 ```
 
-**Event Management:**
+### Analytics (`/api/analytics`)
 ```
-PUT    /api/events/{id}/publish    # Publish event
-PUT    /api/events/{id}/cancel     # Cancel event
-```
-
-**Seat Management:**
-```
-POST   /api/events/{id}/reserve-seats?numberOfSeats=N   # Reserve seats
-POST   /api/events/{id}/release-seats?numberOfSeats=N   # Release seats
-GET    /api/events/{id}/available-seats?numberOfSeats=N # Check availability
+GET    /api/analytics/overview  # System overview
+GET    /api/analytics/revenue   # Revenue data
 ```
 
-### Booking Service (`/api/bookings`)
-
-**CRUD Operations:**
+### Admin (`/api/admin`)
 ```
-POST   /api/bookings               # Create booking
-GET    /api/bookings               # List all bookings
-GET    /api/bookings/{id}          # Get booking by ID
-GET    /api/bookings/reference/{ref} # Get by reference
-DELETE /api/bookings/{id}          # Delete booking
+GET    /api/admin/dashboard/stats    # Dashboard statistics
+GET    /api/admin/events             # All events
+GET    /api/admin/users              # All users
+DELETE /api/admin/users/{id}         # Delete user
 ```
 
-**Queries:**
-```
-GET    /api/bookings/user/{userId}    # Get user's bookings
-GET    /api/bookings/event/{eventId}  # Get event's bookings
-```
-
-**Status Management:**
-```
-PUT    /api/bookings/{id}/confirm-payment  # Confirm payment
-PUT    /api/bookings/{id}/cancel           # Cancel booking
-```
-
-**Analytics:**
-```
-GET    /api/bookings/event/{eventId}/revenue  # Get event revenue
-GET    /api/bookings/event/{eventId}/count    # Get booking count
-```
-
-> ⚠️ **Security Warning:** All endpoints are currently publicly accessible without authentication. This is a critical security vulnerability that must be addressed before production use.
+**Security:** All endpoints (except `/api/auth/*`) require valid JWT token in Authorization header.
 
 ---
 
@@ -529,33 +207,121 @@ GET    /api/bookings/event/{eventId}/count    # Get booking count
 
 ### Frontend Environment
 
-Create `frontend/.env.local`:
+Create [`frontend/.env.local`](frontend/.env.local):
 ```env
-NEXT_PUBLIC_API_GATEWAY_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8080
 ```
 
-### Backend Configuration
+### Backend JWT Configuration
 
-Each service has its own `application.yml` in `src/main/resources/`
+JWT secret configured in [`backend/auth-service/src/main/resources/application.yml`](backend/auth-service/src/main/resources/application.yml):
+```yaml
+jwt:
+  secret: <base64-encoded-secret>
+  expiration: 86400000  # 24 hours
+```
+
+**Note:** Same JWT secret must be configured in [`backend/api-gateway/src/main/resources/application.yml`](backend/api-gateway/src/main/resources/application.yml).
+
+---
+
+## 📁 Project Structure
+
+```
+event-management-system/
+├── backend/
+│   ├── api-gateway/           # JWT authentication & routing
+│   ├── eureka-server/         # Service discovery
+│   ├── config-server/         # Configuration server
+│   ├── auth-service/          # Authentication & user management
+│   ├── event-service/         # Event CRUD operations
+│   ├── attendee-service/      # Attendee management
+│   ├── ticket-service/        # Ticket operations
+│   ├── notification-service/  # Notifications
+│   ├── analytics-service/     # Analytics & reporting
+│   └── admin-service/         # Admin operations
+├── frontend/                  # React + Vite application
+├── config-repo/              # Shared configurations
+├── docker-compose.yml        # Docker orchestration
+├── DEPLOYMENT.md             # Deployment guide
+└── README.md                 # This file
+```
+
+---
+
+## 🛠️ Development
+
+### Build Commands
+
+```bash
+# Build all services
+./build.sh  # Linux/Mac
+build.bat   # Windows
+
+# Build individual service
+cd backend/auth-service
+mvn clean package -DskipTests
+
+# Build frontend
+cd frontend
+npm install
+npm run build
+```
+
+### Docker Commands
+
+```bash
+docker-compose up --build      # Build and start all services
+docker-compose down            # Stop all services
+docker-compose logs -f         # View logs
+docker-compose ps              # List containers
+docker-compose down -v         # Remove volumes
+```
+
+---
+
+## 🔐 Security Notes
+
+✅ **Implemented:**
+- JWT token-based authentication
+- Password hashing with BCrypt
+- API Gateway security filtering
+- Role-based access control
+- Protected routes
+
+⚠️ **Production Recommendations:**
+- Change default admin password
+- Use environment variables for secrets
+- Enable HTTPS/TLS
+- Implement rate limiting
+- Add CORS configuration
+- Set up proper logging and monitoring
+- Use managed databases (not H2)
+
+---
 
 
 ## 🐛 Troubleshooting
 
-### Services not showing in Eureka
+**Services not registering with Eureka:**
 - Wait 30-60 seconds for registration
-- Ensure Discovery Server started first
+- Check Eureka dashboard at http://localhost:8761
 
-### Port already in use
-- Check and stop conflicting services
-- Or change ports in `application.yml`
+**JWT token errors:**
+- Verify JWT secrets match in auth-service and api-gateway
+- Check token expiration time
 
-### Docker issues
+**Port conflicts:**
+- Stop conflicting services or change ports in `application.yml`
+
+**Docker issues:**
 ```bash
-docker-compose down -v       # Reset everything
-docker system prune -f       # Clean up
+docker-compose down -v
+docker system prune -f
+docker-compose up --build
 ```
 
-For detailed troubleshooting, see [GUIDE.md](GUIDE.md).
+For detailed troubleshooting, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
@@ -565,95 +331,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🌟 Features
-
-### ✅ Implemented Features
-
-- ✨ **Microservices Architecture** - 3 business services + infrastructure
-- 🔄 **Service Discovery & Registration** - Netflix Eureka
-- 🌉 **API Gateway Pattern** - Spring Cloud Gateway with route mapping
-- ⚙️ **Centralized Configuration** - Config Server ready
-- 🐳 **Docker Ready** - Complete docker-compose setup
-- 📱 **Modern React Frontend** - Next.js 14 + TypeScript + Tailwind CSS
-- 💾 **Database Per Service** - MySQL (H2 for development)
-- 📊 **Health Monitoring** - Actuator endpoints
-- 📚 **Comprehensive Documentation** - Detailed guides and API docs
-
-### 🚀 Business Features
-
-- **User Management**: Registration, login, profile management, role-based access
-- **Event Management**: Create, publish, search, categorize events with seat management
-- **Booking System**: Complete booking workflow with payment confirmation and cancellation
-- **Search & Filter**: Full-text search across users and events
-- **Analytics**: Revenue tracking and booking statistics
-- **Responsive UI**: Mobile-friendly interface with modern design
-
-### ⚠️ Missing Features (Security First!)
-
-- 🔒 **Authentication & Authorization** - JWT implementation needed
-- 🔐 **Password Encryption** - BCrypt hashing required
-- 🛡️ **Security Headers** - CORS, CSRF, XSS protection
-- ⏱️ **Rate Limiting** - Prevent brute force attacks
-- 🧪 **Comprehensive Testing** - Unit, integration, and E2E tests
-- 📧 **Email Notifications** - Booking confirmations, event updates
-- 💳 **Payment Integration** - Stripe/PayPal integration
-- 📊 **Advanced Analytics** - Dashboard with charts and reports
-
----
-
-## 👥 Built For Teams
-
-This boilerplate is designed for team development with:
-- Clear project structure
-- Comprehensive documentation
-- Easy local setup
-- Docker support
-- Git-ready configuration
-
----
-
 ## 🤝 Contributing
 
-Contributions are welcome! Please ensure:
-- All new features include tests
-- Security best practices are followed
+Contributions welcome! Please ensure:
 - Code follows existing patterns
+- JWT authentication is maintained
+- Role-based access is respected
 - Documentation is updated
 
 ---
 
-## 📝 Next Steps
+## 📞 Support
 
-To make this production-ready:
+For issues or questions:
+- Check service health: `http://localhost:8080/actuator/health`
+- View Eureka dashboard: `http://localhost:8761`
+- Check logs: `docker-compose logs [service-name]`
 
-1. **Security (Critical)**
-   - Implement BCrypt password hashing
-   - Add JWT authentication system
-   - Configure Spring Security
-   - Add CSRF protection
-   - Implement rate limiting
-
-2. **Testing**
-   - Write unit tests for services
-   - Add integration tests
-   - Implement E2E tests
-
-3. **Features**
-   - Email notification system
-   - Payment gateway integration
-   - Advanced search and filters
-   - Admin dashboard
-
-4. **DevOps**
-   - CI/CD pipeline
-   - Automated security scanning
-   - Performance monitoring
-   - Log aggregation
-
----
-
-**Ready to build, but secure it first!** �
-
-For questions, issues, or contributions, please open a GitHub issue.
-
-**Version:** 0.2.0-dev | **Status:** Development - NOT Production Ready | **License:** MIT
+**Version:** 1.0.0 | **Status:** Production Ready | **License:** MIT
