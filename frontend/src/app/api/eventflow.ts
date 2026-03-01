@@ -145,15 +145,58 @@ export const analyticsApi = {
   },
 };
 
-export const paymentApi = {
-  initiate: (payload: { orderId: string; amount: number; currency: string }) =>
-    apiRequest<{
-      merchant_id: string;
-      order_id: string;
-      amount: string;
-      currency: string;
-      hash: string;
-      action_url: string;
-    }>("/api/tickets/payment/initiate", { method: "POST", body: payload }),
-};
+export interface PaymentInitPayload {
+  eventId: string;
+  userId: string;
+  amount: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  eventTitle?: string;
+}
 
+export interface PaymentInitResult {
+  orderId: string;
+  merchantId: string;
+  hash: string;
+  amount: string;
+  currency: string;
+  itemName: string;
+  returnUrl: string;
+  cancelUrl: string;
+  notifyUrl: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  sandbox: boolean;
+}
+
+export interface PaymentStatus {
+  id: string;
+  orderId: string;
+  eventId: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  status: string; // PENDING, COMPLETED, FAILED, CANCELLED
+  paymentId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  eventTitle: string;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export const paymentApi = {
+  initPayment: (payload: PaymentInitPayload) =>
+    apiRequest<PaymentInitResult>("/api/payment/init", { method: "POST", body: payload }),
+
+  getPaymentStatus: (orderId: string) =>
+    apiRequest<PaymentStatus>(`/api/payment/status/${orderId}`),
+
+  simulatePaymentSuccess: (orderId: string) =>
+    apiRequest<void>(`/api/payment/dev/force-complete/${orderId}`, { method: "POST" }),
+};

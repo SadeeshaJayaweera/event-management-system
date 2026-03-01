@@ -87,6 +87,20 @@ services:
     networks:
       - event-network
 
+  payment-service:
+    build: ./backend/payment-service
+    ports:
+      - "8088:8088"
+    depends_on:
+      - discovery
+      - ticket-service
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - event-network
+
   frontend:
     build: ./frontend
     ports:
@@ -99,3 +113,5 @@ services:
 networks:
   event-network:
     driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: "1450"

@@ -162,7 +162,7 @@ export default function App() {
       // WAIT: I can just pass the event as a prop to Checkout if I update it.
       // For now, let's render it and see.
       // Actually, I'll update Checkout.tsx in next step to accept props to be safe.
-      return <Checkout event={selectedEvent!} onBack={() => setView("app")} />;
+      return <Checkout event={selectedEvent!} user={user!} onBack={() => setView("app")} />;
     }
 
     if (view === "payment_success") {

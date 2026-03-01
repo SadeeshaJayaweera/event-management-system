@@ -68,6 +68,13 @@ spring:
           filters:
             - RewritePath=/api/analytics(?<segment>/?.*), /api/analytics$\{segment}
 
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payment,/api/payment/**
+          filters:
+            - RewritePath=/api/payment(?<segment>/?.*), /api/payment$\{segment}
+
 eureka:
   client:
     serviceUrl:
