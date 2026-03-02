@@ -144,7 +144,13 @@ export function RefundsManagement() {
                             <div className="flex justify-between">
                                 <span className="text-sm text-gray-500">Payment Date</span>
                                 <span className="text-sm text-gray-700">
-                                    {selectedRefund.createdAt ? new Date(selectedRefund.createdAt).toLocaleDateString() : "—"}
+                                    {selectedRefund.createdAt ? new Date(selectedRefund.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "—"}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-sm text-gray-500">Refund Requested</span>
+                                <span className="text-sm font-medium text-amber-700">
+                                    {selectedRefund.updatedAt ? new Date(selectedRefund.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "—"}
                                 </span>
                             </div>
                         </div>
@@ -175,8 +181,8 @@ export function RefundsManagement() {
 
                     {/* Bank Details */}
                     <div className={`rounded-xl border shadow-sm p-5 ${selectedRefund.bankAccountNumber
-                            ? "bg-white border-gray-100"
-                            : "bg-gray-50 border-dashed border-gray-200"
+                        ? "bg-white border-gray-100"
+                        : "bg-gray-50 border-dashed border-gray-200"
                         }`}>
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                             <Building className="w-4 h-4" /> Bank Details
@@ -270,7 +276,8 @@ export function RefundsManagement() {
                                             </p>
                                             <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">Pending</span>
                                         </div>
-                                        <p className="text-sm text-gray-500 truncate">{refund.eventTitle} · Order: {refund.orderId}</p>
+                                        <p className="text-sm text-gray-500 truncate">{refund.email}</p>
+                                        <p className="text-xs text-gray-400 truncate">{refund.eventTitle} · {refund.updatedAt ? new Date(refund.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</p>
                                         {refund.bankAccountNumber
                                             ? <p className="text-xs text-indigo-600 mt-0.5">🏦 Bank details provided</p>
                                             : <p className="text-xs text-red-400 mt-0.5">⚠️ No bank details yet</p>}
@@ -303,7 +310,8 @@ export function RefundsManagement() {
                                             </p>
                                             <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">Done</span>
                                         </div>
-                                        <p className="text-sm text-gray-500 truncate">{refund.eventTitle} · Order: {refund.orderId}</p>
+                                        <p className="text-sm text-gray-500 truncate">{refund.email}</p>
+                                        <p className="text-xs text-gray-400 truncate">{refund.eventTitle} · {refund.updatedAt ? new Date(refund.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0">
                                         <p className="font-bold text-gray-700">{refund.currency} {Number(refund.amount).toFixed(2)}</p>

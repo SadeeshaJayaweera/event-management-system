@@ -33,18 +33,18 @@ public class AuthService {
     user.setPasswordHash(encoder.encode(request.getPassword()));
 
     User saved = userRepository.save(user);
-    return new AuthResponse(saved.getId(), saved.getName(), saved.getRole(), issueToken(saved));
+    return new AuthResponse(saved.getId(), saved.getName(), saved.getRole(), issueToken(saved), saved.getEmail());
   }
 
   public AuthResponse login(LoginRequest request) {
     User user = userRepository.findByEmail(request.getEmail())
-      .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+        .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
 
     if (!encoder.matches(request.getPassword(), user.getPasswordHash())) {
       throw new IllegalArgumentException("Invalid credentials");
     }
 
-    return new AuthResponse(user.getId(), user.getName(), user.getRole(), issueToken(user));
+    return new AuthResponse(user.getId(), user.getName(), user.getRole(), issueToken(user), user.getEmail());
   }
 
   private String issueToken(User user) {
@@ -52,4 +52,3 @@ public class AuthService {
     return Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
   }
 }
-

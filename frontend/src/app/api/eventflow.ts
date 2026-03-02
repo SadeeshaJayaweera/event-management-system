@@ -7,6 +7,7 @@ export interface AuthResponse {
   name: string;
   role: UserRole;
   token: string;
+  email: string;
 }
 
 export interface EventItem {

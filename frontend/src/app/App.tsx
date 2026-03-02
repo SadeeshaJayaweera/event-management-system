@@ -21,6 +21,7 @@ interface User {
   name: string;
   role: UserRole;
   token: string;
+  email: string;
 }
 
 export default function App() {
@@ -78,7 +79,7 @@ export default function App() {
   }, []);
 
   const handleLogin = (payload: AuthResponse) => {
-    const userData = { id: payload.userId, name: payload.name, role: payload.role, token: payload.token };
+    const userData = { id: payload.userId, name: payload.name, role: payload.role, token: payload.token, email: payload.email };
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     setView("app");
