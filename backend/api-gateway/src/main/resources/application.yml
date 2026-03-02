@@ -46,6 +46,16 @@ spring:
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
 
+        - id: users-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - RewritePath=/api/users(?<segment>/?.*), /api/users$\{segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
+
         - id: event-service
           uri: lb://event-service
           predicates:
@@ -96,6 +106,66 @@ spring:
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
 
+        - id: profile-service
+          uri: lb://profile-service
+          predicates:
+            - Path=/api/profiles/**
+          filters:
+            - RewritePath=/api/profiles(?<segment>/?.*), /api/profiles$\{segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
+
+        # OpenAPI documentation routes for each service
+        - id: auth-service-openapi
+          uri: lb://auth-service
+          predicates:
+            - Path=/v3/api-docs/auth-service
+          filters:
+            - RewritePath=/v3/api-docs/auth-service, /v3/api-docs
+
+        - id: event-service-openapi
+          uri: lb://event-service
+          predicates:
+            - Path=/v3/api-docs/event-service
+          filters:
+            - RewritePath=/v3/api-docs/event-service, /v3/api-docs
+
+        - id: profile-service-openapi
+          uri: lb://profile-service
+          predicates:
+            - Path=/v3/api-docs/profile-service
+          filters:
+            - RewritePath=/v3/api-docs/profile-service, /v3/api-docs
+
+        - id: ticket-service-openapi
+          uri: lb://ticket-service
+          predicates:
+            - Path=/v3/api-docs/ticket-service
+          filters:
+            - RewritePath=/v3/api-docs/ticket-service, /v3/api-docs
+
+        - id: notification-service-openapi
+          uri: lb://notification-service
+          predicates:
+            - Path=/v3/api-docs/notification-service
+          filters:
+            - RewritePath=/v3/api-docs/notification-service, /v3/api-docs
+
+        - id: admin-service-openapi
+          uri: lb://admin-service
+          predicates:
+            - Path=/v3/api-docs/admin-service
+          filters:
+            - RewritePath=/v3/api-docs/admin-service, /v3/api-docs
+
+        - id: analytics-service-openapi
+          uri: lb://analytics-service
+          predicates:
+            - Path=/v3/api-docs/analytics-service
+          filters:
+            - RewritePath=/v3/api-docs/analytics-service, /v3/api-docs
+
 eureka:
   client:
     serviceUrl:
@@ -113,4 +183,28 @@ management:
 jwt:
   secret: ${JWT_SECRET:bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=}
   expiration: ${JWT_EXPIRATION:86400000}
+
+# Springdoc OpenAPI Configuration for API Documentation
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - name: auth-service
+        url: /v3/api-docs/auth-service
+      - name: event-service
+        url: /v3/api-docs/event-service
+      - name: profile-service
+        url: /v3/api-docs/profile-service
+      - name: ticket-service
+        url: /v3/api-docs/ticket-service
+      - name: notification-service
+        url: /v3/api-docs/notification-service
+      - name: admin-service
+        url: /v3/api-docs/admin-service
+      - name: analytics-service
+        url: /v3/api-docs/analytics-service
 

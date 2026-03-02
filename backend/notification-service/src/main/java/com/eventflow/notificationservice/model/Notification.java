@@ -36,6 +36,19 @@ public class Notification {
   @Column(nullable = false)
   private LocalDateTime createdAt;
 
+  // New fields for in-app notifications
+  @Column(name = "user_id")
+  private UUID userId;
+
+  @Column(name = "notification_type")
+  private String notificationType;
+
+  @Column(name = "is_read", nullable = false)
+  private Boolean isRead = false;
+
+  @Column(name = "action_url")
+  private String actionUrl;
+
   public UUID getId() {
     return id;
   }
@@ -90,6 +103,38 @@ public class Notification {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public UUID getUserId() {
+    return userId;
+  }
+
+  public void setUserId(UUID userId) {
+    this.userId = userId;
+  }
+
+  public String getNotificationType() {
+    return notificationType;
+  }
+
+  public void setNotificationType(String notificationType) {
+    this.notificationType = notificationType;
+  }
+
+  public Boolean getIsRead() {
+    return isRead;
+  }
+
+  public void setIsRead(Boolean isRead) {
+    this.isRead = isRead;
+  }
+
+  public String getActionUrl() {
+    return actionUrl;
+  }
+
+  public void setActionUrl(String actionUrl) {
+    this.actionUrl = actionUrl;
   }
 }
 

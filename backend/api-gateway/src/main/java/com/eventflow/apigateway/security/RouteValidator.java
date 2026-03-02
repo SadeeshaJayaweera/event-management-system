@@ -17,7 +17,11 @@ public class RouteValidator {
             "/api/notifications/health", // Health check
             "/api/analytics/health", // Health check
             "/api/admin/health", // Health check
-            "/actuator" // Actuator endpoints
+            "/actuator", // Actuator endpoints
+            "/swagger-ui", // Swagger UI
+            "/v3/api-docs", // OpenAPI documentation
+            "/swagger-ui.html", // Swagger UI HTML
+            "/webjars/swagger-ui" // Swagger UI resources
     );
 
     // Endpoints that use GET method and don't require auth (public viewing)

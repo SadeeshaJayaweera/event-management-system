@@ -48,6 +48,9 @@ public class Event {
   @Column(columnDefinition = "TEXT")
   private String imageUrl;
 
+  @Column(name = "organizer_id")
+  private UUID organizerId;
+
   @Column(nullable = false)
   private LocalDateTime createdAt;
 
@@ -148,6 +151,14 @@ public class Event {
 
   public void setUpdatedAt(LocalDateTime updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public UUID getOrganizerId() {
+    return organizerId;
+  }
+
+  public void setOrganizerId(UUID organizerId) {
+    this.organizerId = organizerId;
   }
 }
 

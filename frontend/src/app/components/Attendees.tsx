@@ -3,12 +3,14 @@ import { Search, Mail, Calendar, CheckCircle, Clock, XCircle, MoreHorizontal, Do
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ticketApi, eventApi, type TicketItem, type EventItem } from "../services/eventflow";
+import { useAuth } from "../contexts/AuthContext";
 
 interface TicketWithEvent extends TicketItem {
   eventTitle?: string;
 }
 
 export function Attendees() {
+  const { user } = useAuth();
   const [tickets, setTickets] = useState<TicketWithEvent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -16,16 +18,23 @@ export function Attendees() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // For organizers, only fetch their own events
+        const organizerId = user?.role === 'organizer' ? user.id : undefined;
+        
         const [ticketsData, eventsData]: [TicketItem[], EventItem[]] = await Promise.all([
           ticketApi.list(),
-          eventApi.list(),
+          eventApi.list(organizerId),
         ]);
 
         // Create a map of event IDs to event titles
         const eventMap = new Map(eventsData.map(e => [e.id, e.title]));
+        
+        // For organizers, only show tickets for their events
+        const eventIds = new Set(eventsData.map(e => e.id));
+        const filteredTickets = ticketsData.filter(ticket => eventIds.has(ticket.eventId));
 
         // Enrich tickets with event titles
-        const enrichedTickets = ticketsData.map(ticket => ({
+        const enrichedTickets = filteredTickets.map(ticket => ({
           ...ticket,
           eventTitle: eventMap.get(ticket.eventId) || 'Unknown Event'
         }));
@@ -40,7 +49,7 @@ export function Attendees() {
     };
 
     loadData();
-  }, []);
+  }, [user?.id, user?.role]);
 
   const filteredTickets = tickets.filter(ticket => 
     ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -16,6 +16,7 @@ public class EventSummary {
   private String status;
   private String description;
   private String imageUrl;
+  private UUID organizerId;
 
   public EventSummary() {
   }
@@ -112,5 +113,13 @@ public class EventSummary {
 
   public void setImageUrl(String imageUrl) {
     this.imageUrl = imageUrl;
+  }
+
+  public UUID getOrganizerId() {
+    return organizerId;
+  }
+
+  public void setOrganizerId(UUID organizerId) {
+    this.organizerId = organizerId;
   }
 }

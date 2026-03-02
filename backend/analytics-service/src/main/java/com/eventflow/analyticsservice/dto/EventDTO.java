@@ -12,6 +12,7 @@ public class EventDTO {
   private String location;
   private BigDecimal price;
   private String status;
+  private String organizerId;
 
   public EventDTO() {
   }
@@ -78,5 +79,13 @@ public class EventDTO {
 
   public void setStatus(String status) {
     this.status = status;
+  }
+
+  public String getOrganizerId() {
+    return organizerId;
+  }
+
+  public void setOrganizerId(String organizerId) {
+    this.organizerId = organizerId;
   }
 }

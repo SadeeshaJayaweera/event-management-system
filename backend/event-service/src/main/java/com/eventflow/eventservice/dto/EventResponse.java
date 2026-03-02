@@ -16,9 +16,10 @@ public class EventResponse {
   private String status;
   private String description;
   private String imageUrl;
+  private UUID organizerId;
 
   public EventResponse(UUID id, String title, String category, LocalDate date, LocalTime time,
-                       String location, BigDecimal price, String status, String description, String imageUrl) {
+                       String location, BigDecimal price, String status, String description, String imageUrl, UUID organizerId) {
     this.id = id;
     this.title = title;
     this.category = category;
@@ -29,6 +30,7 @@ public class EventResponse {
     this.status = status;
     this.description = description;
     this.imageUrl = imageUrl;
+    this.organizerId = organizerId;
   }
 
   public UUID getId() {
@@ -69,6 +71,10 @@ public class EventResponse {
 
   public String getImageUrl() {
     return imageUrl;
+  }
+
+  public UUID getOrganizerId() {
+    return organizerId;
   }
 }
 

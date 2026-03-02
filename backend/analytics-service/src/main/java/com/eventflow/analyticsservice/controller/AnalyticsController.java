@@ -9,9 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/analytics")
@@ -24,18 +26,18 @@ public class AnalyticsController {
   }
 
   @GetMapping("/overview")
-  public OverviewResponse overview() {
-    return analyticsService.getOverview();
+  public OverviewResponse overview(@RequestParam(required = false) UUID organizerId) {
+    return analyticsService.getOverview(organizerId);
   }
 
   @GetMapping("/revenue")
-  public List<RevenuePoint> revenue() {
-    return analyticsService.getMonthlyRevenue();
+  public List<RevenuePoint> revenue(@RequestParam(required = false) UUID organizerId) {
+    return analyticsService.getMonthlyRevenue(organizerId);
   }
 
   @GetMapping("/events-by-category")
-  public List<CategoryCount> eventsByCategory() {
-    return analyticsService.getEventsByCategory();
+  public List<CategoryCount> eventsByCategory(@RequestParam(required = false) UUID organizerId) {
+    return analyticsService.getEventsByCategory(organizerId);
   }
 
   @PostMapping("/snapshot")

@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { eventApi, ticketApi, type EventItem, type TicketItem } from "../services/eventflow";
-import { Calendar, MapPin, Users, DollarSign, ArrowLeft, User, Mail } from "lucide-react";
+import { Calendar, MapPin, Users, DollarSign, ArrowLeft, User, Mail, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "../contexts/AuthContext";
 
 export function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [event, setEvent] = useState<EventItem | null>(null);
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const loadEventDetail = async () => {
@@ -40,6 +44,30 @@ export function EventDetail() {
     loadEventDetail();
   }, [id, navigate]);
 
+  const canManageEvent = () => {
+    if (!user || !event) return false;
+    // Admins can manage all events, organizers can only manage their own
+    return user.role === 'admin' || (user.role === 'organizer' && event.organizerId === user.id);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    setDeleting(true);
+    try {
+      await eventApi.delete(id);
+      toast.success("Event deleted successfully");
+      // Notify attendees (handled by backend)
+      navigate('/dashboard/events');
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      toast.error("Failed to delete event");
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -55,17 +83,38 @@ export function EventDetail() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/dashboard/events')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Event Details</h1>
-          <p className="text-gray-500 mt-1">View and manage event information</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/dashboard/events')}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Event Details</h1>
+            <p className="text-gray-500 mt-1">View and manage event information</p>
+          </div>
         </div>
+        
+        {canManageEvent() && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/dashboard/events/edit/${id}`)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
+              <Edit className="w-4 h-4" />
+              Edit Event
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Event Information */}
@@ -185,6 +234,39 @@ export function EventDetail() {
           </div>
         </div>
       </div>
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Event</h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete this event? This action cannot be undone. 
+              {tickets.length > 0 && (
+                <span className="block mt-2 text-red-600 font-medium">
+                  {tickets.length} attendee(s) who purchased tickets will be notified.
+                </span>
+              )}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete Event"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

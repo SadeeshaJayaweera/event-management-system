@@ -1,10 +1,10 @@
-
 import { Search, MoreVertical, Calendar, MapPin, Users, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { eventApi, ticketApi, type EventItem } from "../services/eventflow";
 import { toast } from "sonner";
 import { EventCardSkeleton } from "./LoadingSpinner";
+import { useAuth } from "../contexts/AuthContext";
 
 interface EventWithAttendees extends EventItem {
   attendeeCount?: number;
@@ -12,13 +12,16 @@ interface EventWithAttendees extends EventItem {
 
 export function EventList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState<EventWithAttendees[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const data = await eventApi.list();
+        // For organizers, only fetch their own events
+        const organizerId = user?.role === 'organizer' ? user.id : undefined;
+        const data = await eventApi.list(organizerId);
         
         // Fetch ticket counts for each event
         const eventsWithCounts = await Promise.all(
@@ -43,7 +46,7 @@ export function EventList() {
     };
 
     loadEvents();
-  }, []);
+  }, [user?.id, user?.role]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
 

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, Calendar } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar';
+import { ProfileDropdown } from '../components/ProfileDropdown';
+import { NotificationBell } from '../components/NotificationBell';
 import { useAuth } from '../contexts/AuthContext';
 
 export function OrganizerLayout() {
@@ -55,19 +57,23 @@ export function OrganizerLayout() {
       </div>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 p-4 z-20 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 z-20 flex items-center justify-between">
         <a href="/" className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <Calendar className="text-white w-5 h-5" />
           </div>
           <span className="text-xl font-bold text-gray-900">EventFlow</span>
         </a>
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-          className="p-2 text-gray-600"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+        <div className="flex items-center space-x-2">
+          <NotificationBell />
+          <ProfileDropdown />
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+            className="p-2 text-gray-600"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -91,18 +97,18 @@ export function OrganizerLayout() {
       {/* Main Content */}
       <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 overflow-y-auto h-screen">
         <div className="max-w-7xl mx-auto">
-          {/* Header for Organizer Dashboard to show user info/logout */}
-          <div className="flex justify-end mb-6">
-            <div className="flex items-center space-x-4">
+          {/* Header with Profile Dropdown */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="hidden md:block">
               <span className="text-sm font-medium text-gray-600">
-                Welcome, {user?.name}
+                Welcome back, {user?.name}
               </span>
-              <button 
-                onClick={handleLogout}
-                className="text-sm text-red-600 hover:text-red-700 font-medium"
-              >
-                Sign Out
-              </button>
+            </div>
+            <div className="ml-auto flex items-center space-x-3">
+              <div className="hidden md:block">
+                <NotificationBell />
+              </div>
+              <ProfileDropdown />
             </div>
           </div>
           

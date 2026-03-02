@@ -31,6 +31,8 @@ public class EventCreateRequest {
 
   private String imageUrl;
 
+  private String organizerId;
+
   public String getTitle() {
     return title;
   }
@@ -93,6 +95,14 @@ public class EventCreateRequest {
 
   public void setImageUrl(String imageUrl) {
     this.imageUrl = imageUrl;
+  }
+
+  public String getOrganizerId() {
+    return organizerId;
+  }
+
+  public void setOrganizerId(String organizerId) {
+    this.organizerId = organizerId;
   }
 }
 

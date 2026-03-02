@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,7 +31,10 @@ public class EventController {
   }
 
   @GetMapping
-  public List<EventResponse> list() {
+  public List<EventResponse> list(@RequestParam(required = false) UUID organizerId) {
+    if (organizerId != null) {
+      return eventService.listByOrganizer(organizerId).stream().map(this::toResponse).toList();
+    }
     return eventService.list().stream().map(this::toResponse).toList();
   }
 
@@ -71,7 +75,8 @@ public class EventController {
       event.getPrice(),
       event.getStatus(),
       event.getDescription(),
-      event.getImageUrl()
+      event.getImageUrl(),
+      event.getOrganizerId()
     );
   }
 }

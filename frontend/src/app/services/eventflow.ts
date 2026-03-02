@@ -20,6 +20,7 @@ export interface EventItem {
   status: string;
   description: string;
   imageUrl?: string | null;
+  organizerId?: string;
 }
 
 export interface AttendeeItem {
@@ -60,7 +61,12 @@ export const authApi = {
 };
 
 export const eventApi = {
-  list: () => apiRequest<EventItem[]>("/api/events"),
+  list: (organizerId?: string) => {
+    const queryParams = new URLSearchParams();
+    if (organizerId) queryParams.append("organizerId", organizerId);
+    const queryString = queryParams.toString();
+    return apiRequest<EventItem[]>(queryString ? `/api/events?${queryString}` : "/api/events");
+  },
   create: (payload: {
     title: string;
     category: string;
@@ -70,7 +76,20 @@ export const eventApi = {
     price: number;
     description: string;
     imageUrl?: string | null;
+    organizerId?: string;
   }) => apiRequest<EventItem>("/api/events", { method: "POST", body: payload }),
+  update: (id: string, payload: {
+    title: string;
+    category: string;
+    date: string;
+    time: string;
+    location: string;
+    price: number;
+    description: string;
+    status: string;
+    imageUrl?: string | null;
+  }) => apiRequest<EventItem>(`/api/events/${id}`, { method: "PUT", body: payload }),
+  delete: (id: string) => apiRequest<void>(`/api/events/${id}`, { method: "DELETE" }),
 };
 
 export const attendeeApi = {
@@ -111,10 +130,14 @@ export const ticketApi = {
 };
 
 export const analyticsApi = {
-  overview: async () => {
+  overview: async (organizerId?: string) => {
     try {
-      // Use the analytics service endpoint
-      const overviewData = await apiRequest<AnalyticsOverview>("/api/analytics/overview");
+      const queryParams = new URLSearchParams();
+      if (organizerId) queryParams.append("organizerId", organizerId);
+      const queryString = queryParams.toString();
+      const overviewData = await apiRequest<AnalyticsOverview>(
+        queryString ? `/api/analytics/overview?${queryString}` : "/api/analytics/overview"
+      );
       return overviewData;
     } catch (error) {
       console.error("Failed to fetch analytics overview:", error);
@@ -127,10 +150,14 @@ export const analyticsApi = {
       };
     }
   },
-  revenue: async () => {
+  revenue: async (organizerId?: string) => {
     try {
-      // Use the analytics service endpoint
-      const revenueData = await apiRequest<RevenuePoint[]>("/api/analytics/revenue");
+      const queryParams = new URLSearchParams();
+      if (organizerId) queryParams.append("organizerId", organizerId);
+      const queryString = queryParams.toString();
+      const revenueData = await apiRequest<RevenuePoint[]>(
+        queryString ? `/api/analytics/revenue?${queryString}` : "/api/analytics/revenue"
+      );
       return revenueData;
     } catch (error) {
       console.error("Failed to fetch revenue data:", error);
@@ -183,3 +210,145 @@ export const adminApi = {
     apiRequest<void>(`/api/admin/users/${id}/unban`, { method: "PUT" }),
 };
 
+// Profile Service Types
+export interface UserPreferences {
+  id: string;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  pushNotifications: boolean;
+  eventReminders: boolean;
+  marketingEmails: boolean;
+  language: string;
+  timezone: string;
+  dateFormat: string;
+  timeFormat: string;
+}
+
+export interface EmergencyContact {
+  id: string;
+  fullName: string;
+  relationship: string;
+  phoneNumber: string;
+  alternatePhoneNumber?: string;
+  email?: string;
+  address?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  bio?: string;
+  avatarUrl?: string;
+  phoneNumber?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  preferences?: UserPreferences;
+  emergencyContact?: EmergencyContact;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProfileUpdateRequest {
+  bio?: string;
+  phoneNumber?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+}
+
+export interface PreferencesUpdateRequest {
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+  pushNotifications?: boolean;
+  eventReminders?: boolean;
+  marketingEmails?: boolean;
+  language: string;
+  timezone: string;
+  dateFormat?: string;
+  timeFormat?: string;
+}
+
+export interface EmergencyContactRequest {
+  fullName: string;
+  relationship: string;
+  phoneNumber: string;
+  alternatePhoneNumber?: string;
+  email?: string;
+  address?: string;
+}
+
+// Profile API
+export const profileApi = {
+  getProfile: (userId: string) => 
+    apiRequest<UserProfile>(`/api/profiles/${userId}`),
+  
+  createProfile: (userId: string) => 
+    apiRequest<UserProfile>(`/api/profiles/${userId}`, { method: "POST" }),
+  
+  updateProfile: (userId: string, payload: ProfileUpdateRequest) =>
+    apiRequest<UserProfile>(`/api/profiles/${userId}`, { method: "PUT", body: payload }),
+  
+  uploadAvatar: (userId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    return fetch(`/api/profiles/${userId}/avatar`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('eventflow_auth') ? JSON.parse(localStorage.getItem('eventflow_auth')!).token : ''}`
+      }
+    }).then(res => {
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
+    });
+  },
+  
+  getPreferences: (userId: string) =>
+    apiRequest<UserPreferences>(`/api/profiles/${userId}/preferences`),
+  
+  updatePreferences: (userId: string, payload: PreferencesUpdateRequest) =>
+    apiRequest<UserProfile>(`/api/profiles/${userId}/preferences`, { method: "PUT", body: payload }),
+  
+  getEmergencyContact: (userId: string) =>
+    apiRequest<EmergencyContact>(`/api/profiles/${userId}/emergency-contact`),
+  
+  updateEmergencyContact: (userId: string, payload: EmergencyContactRequest) =>
+    apiRequest<UserProfile>(`/api/profiles/${userId}/emergency-contact`, { method: "PUT", body: payload }),
+  
+  deleteEmergencyContact: (userId: string) =>
+    apiRequest<void>(`/api/profiles/${userId}/emergency-contact`, { method: "DELETE" }),
+};
+
+// Notification Types
+export interface InAppNotification {
+  id: string;
+  userId: string;
+  notificationType: string;
+  message: string;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+// Notification API
+export const notificationApi = {
+  getUserNotifications: (userId: string) =>
+    apiRequest<InAppNotification[]>(`/api/notifications/user/${userId}`),
+  
+  markAsRead: (notificationId: string) =>
+    apiRequest<InAppNotification>(`/api/notifications/${notificationId}/read`, { method: "PATCH" }),
+  
+  markAllAsRead: (userId: string) =>
+    apiRequest<void>(`/api/notifications/user/${userId}/read-all`, { method: "PATCH" }),
+  
+  getUnreadCount: (userId: string) =>
+    apiRequest<number>(`/api/notifications/user/${userId}/unread-count`),
+};
+
+// Admin Broadcast API
+export const broadcastApi = {
+  sendBroadcast: (message: string) =>
+    apiRequest<void>("/api/admin/broadcast", { method: "POST", body: { message } }),
+};

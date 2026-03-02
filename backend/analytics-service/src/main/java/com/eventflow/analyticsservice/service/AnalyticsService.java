@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,11 +42,33 @@ public class AnalyticsService {
     this.snapshotRepository = snapshotRepository;
   }
 
-  public OverviewResponse getOverview() {
+  public OverviewResponse getOverview(UUID organizerId) {
     List<EventDTO> events = fetchEvents();
+    
+    // Filter by organizerId if provided
+    if (organizerId != null) {
+      String organizerIdStr = organizerId.toString();
+      events = events.stream()
+          .filter(e -> organizerIdStr.equals(e.getOrganizerId()))
+          .toList();
+    }
+    
+    // Get event IDs to filter tickets
+    List<String> eventIds = events.stream()
+        .map(EventDTO::getId)
+        .filter(Objects::nonNull)
+        .toList();
+    
     List<TicketDTO> tickets = fetchTickets();
+    
+    // Filter tickets to only those for the filtered events
+    if (organizerId != null && !eventIds.isEmpty()) {
+      tickets = tickets.stream()
+          .filter(t -> eventIds.contains(t.getEventId()))
+          .toList();
+    }
+    
     int totalMembers = countUniqueUsers(tickets);
-
     int totalEvents = events.size();
     int totalTicketsSold = tickets.size();
 
@@ -66,8 +89,31 @@ public class AnalyticsService {
     );
   }
 
-  public List<RevenuePoint> getMonthlyRevenue() {
+  public List<RevenuePoint> getMonthlyRevenue(UUID organizerId) {
+    List<EventDTO> events = fetchEvents();
+    
+    // Filter by organizerId if provided
+    if (organizerId != null) {
+      String organizerIdStr = organizerId.toString();
+      events = events.stream()
+          .filter(e -> organizerIdStr.equals(e.getOrganizerId()))
+          .toList();
+    }
+    
+    // Get event IDs to filter tickets
+    List<String> eventIds = events.stream()
+        .map(EventDTO::getId)
+        .filter(Objects::nonNull)
+        .toList();
+    
     List<TicketDTO> tickets = fetchTickets();
+    
+    // Filter tickets to only those for the filtered events
+    if (organizerId != null && !eventIds.isEmpty()) {
+      tickets = tickets.stream()
+          .filter(t -> eventIds.contains(t.getEventId()))
+          .toList();
+    }
 
     Map<Month, BigDecimal> revenueByMonth = new LinkedHashMap<>();
     for (Month month : Month.values()) {
@@ -100,8 +146,16 @@ public class AnalyticsService {
     return result;
   }
 
-  public List<CategoryCount> getEventsByCategory() {
+  public List<CategoryCount> getEventsByCategory(UUID organizerId) {
     List<EventDTO> events = fetchEvents();
+    
+    // Filter by organizerId if provided
+    if (organizerId != null) {
+      String organizerIdStr = organizerId.toString();
+      events = events.stream()
+          .filter(e -> organizerIdStr.equals(e.getOrganizerId()))
+          .toList();
+    }
 
     Map<String, Long> categoryMap = events.stream()
         .filter(e -> e.getCategory() != null)

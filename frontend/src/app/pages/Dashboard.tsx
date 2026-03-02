@@ -3,6 +3,7 @@ import { analyticsApi, eventApi, ticketApi, type AnalyticsOverview, type EventIt
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Calendar, Clock, MapPin, DollarSign, Users, TrendingUp, Mail, User } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "../contexts/AuthContext";
 
 const fallbackRevenue = [
   { name: "Jan", revenue: 4000 },
@@ -15,6 +16,7 @@ const fallbackRevenue = [
 ];
 
 export function Dashboard() {
+  const { user } = useAuth();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [revenue, setRevenue] = useState<RevenuePoint[]>(fallbackRevenue);
@@ -25,10 +27,13 @@ export function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // For organizers, filter by their organizerId
+        const organizerId = user?.role === 'organizer' ? user.id : undefined;
+        
         const [eventsData, overviewData, revenueData] = await Promise.all([
-          eventApi.list(),
-          analyticsApi.overview(),
-          analyticsApi.revenue(),
+          eventApi.list(organizerId),
+          analyticsApi.overview(organizerId),
+          analyticsApi.revenue(organizerId),
         ]);
         setEvents(eventsData);
         setOverview(overviewData);
@@ -57,7 +62,7 @@ export function Dashboard() {
     };
 
     loadData();
-  }, []);
+  }, [user?.id, user?.role]);
 
   const stats = overview
     ? [

@@ -1,289 +1,216 @@
-import { eventApi, ticketApi, type EventItem, type TicketItem } from "../services/eventflow";
-import { Search, Calendar, MapPin, Heart, Ticket, LogOut, CheckCircle } from "lucide-react";
+import { eventApi, ticketApi, type EventItem } from "../services/eventflow";
+import { Calendar, MapPin, Ticket, TrendingUp, Clock, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import clsx from "clsx";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 
 export function AttendeeDashboard() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'discover' | 'tickets'>('discover');
-  const [searchTerm, setSearchTerm] = useState("");
-  const [likedEvents, setLikedEvents] = useState<string[]>([]);
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const { user } = useAuth();
+  const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
   const [myTickets, setMyTickets] = useState<EventItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     
-    const loadData = async () => {
+    const loadDashboardData = async () => {
       try {
-        const [eventsData, ticketsData]: [EventItem[], TicketItem[]] = await Promise.all([
+        setLoading(true);
+        const [eventsData, ticketsData] = await Promise.all([
           eventApi.list(),
           ticketApi.list({ userId: user.id }),
         ]);
-        setEvents(eventsData);
 
         const ticketEventIds = new Set(ticketsData.map((ticket) => ticket.eventId));
         const userTicketedEvents = eventsData.filter(e => ticketEventIds.has(e.id));
+        
         setMyTickets(userTicketedEvents);
+        setUpcomingEvents(eventsData.slice(0, 6));
       } catch (error) {
         console.error(error);
-        toast.error("Failed to load data");
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
       }
     };
 
-    void loadData();
+    void loadDashboardData();
   }, [user?.id]);
 
-  const filteredEvents = events.filter(event =>
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const toggleLike = (id: string) => {
-    if (likedEvents.includes(id)) {
-      setLikedEvents(likedEvents.filter(e => e !== id));
-      toast("Removed from favorites");
-    } else {
-      setLikedEvents([...likedEvents, id]);
-      toast("Added to favorites");
-    }
-  };
-
-  const handleBuyTicket = async (event: EventItem) => {
-    if (!user) {
-      toast.error("Please log in to purchase tickets");
-      return;
-    }
-
-    if (myTickets.some((ticket) => ticket.id === event.id)) {
-      toast.error("You already have a ticket for this event!");
-      setActiveTab('tickets');
-      return;
-    }
-
-    try {
-      const purchasePromise = ticketApi.purchase({ eventId: event.id, userId: user.id, price: event.price });
-      toast.promise(purchasePromise, {
-        loading: 'Processing payment...',
-        success: `Successfully registered for ${event.title}!`,
-        error: 'Failed to book ticket'
-      });
-      await purchasePromise;
-      setMyTickets((previous) => [...previous, event]);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <a href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <Calendar className="text-white w-5 h-5" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">EventFlow</span>
-            </a>
-            
-            <div className="hidden md:flex items-center space-x-8">
-              <button 
-                onClick={() => setActiveTab('discover')}
-                className={clsx("text-sm font-medium transition-colors relative py-5", activeTab === 'discover' ? "text-indigo-600" : "text-gray-500 hover:text-gray-900")}
-              >
-                Discover
-                {activeTab === 'discover' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />}
-              </button>
-              <button 
-                onClick={() => setActiveTab('tickets')}
-                className={clsx("text-sm font-medium transition-colors relative py-5", activeTab === 'tickets' ? "text-indigo-600" : "text-gray-500 hover:text-gray-900")}
-              >
-                My Tickets
-                {activeTab === 'tickets' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />}
-              </button>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">My Tickets</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{myTickets.length}</p>
             </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm border border-indigo-200">
-                  {user?.name.charAt(0)}
-                </div>
-                <span className="text-sm font-medium text-gray-700 hidden sm:block">{user?.name}</span>
-              </div>
-              <button 
-                onClick={() => {
-                  logout();
-                  navigate('/');
-                }} 
-                className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+            <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
+              <Ticket className="w-6 h-6 text-indigo-600" />
             </div>
           </div>
+          <button
+            onClick={() => navigate('/attendee/tickets')}
+            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-4"
+          >
+            View all tickets →
+          </button>
         </div>
-      </nav>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'discover' ? (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Hero Banner */}
-            <div className="relative rounded-2xl overflow-hidden bg-indigo-900 h-64 md:h-80 flex items-center group">
-              <div className="absolute inset-0 opacity-40">
-                <img
-                  src="https://images.unsplash.com/photo-1735748917428-be035e873f97?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpYyUyMGNvbmNlcnQlMjBjcm93ZCUyMGxpZ2h0c3xlbnwxfHx8fDE3NzAyNjI1MTN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                  alt="Crowd enjoying a live concert"
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                />
-              </div>
-              <div className="relative z-10 px-8 md:px-12 max-w-2xl">
-                <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">Find your next experience</h1>
-                <p className="text-indigo-100 text-lg mb-8">Discover concerts, workshops, and conferences happening near you.</p>
-                <div className="relative max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    placeholder="Search events, categories, or locations..." 
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 text-gray-900 shadow-lg placeholder:text-gray-400"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Event Grid */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Trending Events</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEvents.map((event) => (
-                  <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full">
-                    <div className="relative h-48 overflow-hidden">
-                      <img src={event.imageUrl || ""} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <button
-                        onClick={() => toggleLike(event.id)}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow-sm transition-colors z-10"
-                      >
-                        <Heart className={clsx("w-4 h-4", likedEvents.includes(event.id) ? "fill-red-500 text-red-500" : "text-gray-400")} />
-                      </button>
-                      <div className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold text-gray-900 bg-white/90 shadow-sm">
-                        ${event.price}
-                      </div>
-                    </div>
-                    
-                    <div className="p-5 flex-1 flex flex-col">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-100">
-                          {event.category}
-                        </span>
-                      </div>
-                      
-                      <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">{event.title}</h3>
-                      <p className="text-gray-500 text-sm mb-4 line-clamp-2">{event.description}</p>
-                      
-                      <div className="mt-auto space-y-2 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span>{event.date} • {event.time}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="truncate">{event.location}</span>
-                        </div>
-                      </div>
+              <p className="text-sm font-medium text-gray-500">Available Events</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{upcomingEvents.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/attendee/discover')}
+            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-4"
+          >
+            Discover events →
+          </button>
+        </div>
 
-                      <button 
-                        onClick={() => handleBuyTicket(event)}
-                        className={clsx(
-                          "w-full mt-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                          myTickets.some(t => t.id === event.id) 
-                             ? "bg-green-50 text-green-700 border border-green-200 cursor-default"
-                             : "bg-gray-900 text-white hover:bg-gray-800"
-                        )}
-                      >
-                        {myTickets.some(t => t.id === event.id) ? "Ticket Purchased" : "Get Tickets"}
-                      </button>
+        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Upcoming</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{myTickets.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+              <Clock className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 mt-4">Events you're attending</p>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-8 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <Sparkles className="w-5 h-5" />
+              <span className="text-sm font-semibold uppercase tracking-wide">Featured</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Discover Amazing Events</h2>
+            <p className="text-indigo-100 max-w-md">
+              Browse through concerts, workshops, conferences, and more. Find experiences that match your interests.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/attendee/discover')}
+            className="hidden md:block px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-lg"
+          >
+            Explore Now
+          </button>
+        </div>
+        <button
+          onClick={() => navigate('/attendee/discover')}
+          className="md:hidden w-full mt-6 px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+        >
+          Explore Now
+        </button>
+      </div>
+
+      {/* My Upcoming Events */}
+      {myTickets.length > 0 && (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">My Upcoming Events</h2>
+            <button
+              onClick={() => navigate('/attendee/tickets')}
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              View all →
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {myTickets.slice(0, 4).map((event) => (
+              <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+                <div className="flex flex-col sm:flex-row gap-4 p-4">
+                  <div className="w-full sm:w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                    <img src={event.imageUrl || ""} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg text-gray-900 mb-1 truncate">{event.title}</h3>
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium mb-2">
+                      {event.category}
+                    </span>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="truncate">{event.date} • {event.time}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-              
-              {filteredEvents.length === 0 && (
-                <div className="text-center py-12">
-                   <p className="text-gray-500">No events found matching "{searchTerm}"</p>
                 </div>
-              )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Trending Events */}
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Trending Events</h2>
+          <button
+            onClick={() => navigate('/attendee/discover')}
+            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            View all →
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {upcomingEvents.slice(0, 6).map((event) => (
+            <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+              <div className="relative h-40 overflow-hidden">
+                <img src={event.imageUrl || ""} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold text-gray-900 bg-white/90 shadow-sm">
+                  ${event.price}
+                </div>
+              </div>
+              <div className="p-4">
+                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">
+                  {event.category}
+                </span>
+                <h3 className="font-bold text-base text-gray-900 mt-2 mb-1 line-clamp-1">{event.title}</h3>
+                <div className="space-y-1 text-xs text-gray-600">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="truncate">{event.date}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="truncate">{event.location}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
-             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">My Tickets</h2>
-                <span className="text-gray-500 text-sm">{myTickets.length} active tickets</span>
-             </div>
-             
-             {myTickets.length === 0 ? (
-               <div className="text-center py-24 bg-white rounded-2xl border border-gray-100 border-dashed">
-                 <Ticket className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                 <h3 className="text-lg font-medium text-gray-900">No tickets yet</h3>
-                 <p className="text-gray-500 mt-2 mb-6">Browse events and book your first experience!</p>
-                 <button 
-                   onClick={() => setActiveTab('discover')}
-                   className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                 >
-                   Browse Events
-                 </button>
-               </div>
-             ) : (
-               <div className="space-y-4">
-                 {myTickets.map((event) => (
-                   <div key={event.id} className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow">
-                     <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
-                       <img src={event.imageUrl || ""} alt={event.title} className="w-full h-full object-cover" />
-                     </div>
-                     <div className="flex-1">
-                       <div className="flex justify-between items-start">
-                         <div>
-                           <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
-                           <div className="flex items-center text-gray-500 text-sm mt-1">
-                              <Calendar className="w-4 h-4 mr-1.5" />
-                              {event.date} at {event.time}
-                           </div>
-                           <div className="flex items-center text-gray-500 text-sm mt-1">
-                              <MapPin className="w-4 h-4 mr-1.5" />
-                              {event.location}
-                           </div>
-                         </div>
-                         <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wide flex items-center">
-                           <CheckCircle className="w-3 h-3 mr-1" />
-                           Confirmed
-                         </span>
-                       </div>
-                       <div className="mt-6 flex gap-3">
-                         <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
-                           <Ticket className="w-4 h-4 mr-2" />
-                           View Ticket
-                         </button>
-                         <button className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                           Add to Calendar
-                         </button>
-                       </div>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-             )}
-          </div>
-        )}
-      </main>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

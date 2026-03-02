@@ -1,5 +1,6 @@
 package com.eventflow.adminservice.controller;
 
+import com.eventflow.adminservice.dto.BroadcastRequest;
 import com.eventflow.adminservice.dto.DashboardStats;
 import com.eventflow.adminservice.dto.EventSummary;
 import com.eventflow.adminservice.dto.EventUpdateRequest;
@@ -7,6 +8,7 @@ import com.eventflow.adminservice.dto.UserResponse;
 import com.eventflow.adminservice.service.AdminAnalyticsService;
 import com.eventflow.adminservice.service.AdminEventService;
 import com.eventflow.adminservice.service.AdminUserService;
+import com.eventflow.adminservice.service.BroadcastService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,13 +34,16 @@ public class AdminController {
   private final AdminEventService adminEventService;
   private final AdminUserService adminUserService;
   private final AdminAnalyticsService adminAnalyticsService;
+  private final BroadcastService broadcastService;
 
   public AdminController(AdminEventService adminEventService,
                          AdminUserService adminUserService,
-                         AdminAnalyticsService adminAnalyticsService) {
+                         AdminAnalyticsService adminAnalyticsService,
+                         BroadcastService broadcastService) {
     this.adminEventService = adminEventService;
     this.adminUserService = adminUserService;
     this.adminAnalyticsService = adminAnalyticsService;
+    this.broadcastService = broadcastService;
   }
 
   // Dashboard Analytics
@@ -98,7 +103,12 @@ public class AdminController {
     adminUserService.unbanUser(id);
     return ResponseEntity.noContent().build();
   }
-
+  // Broadcast Notifications
+  @PostMapping("/broadcast")
+  public ResponseEntity<Void> broadcastMessage(@RequestBody BroadcastRequest request) {
+    broadcastService.broadcastMessage(request.getMessage());
+    return ResponseEntity.ok().build();
+  }
   @ExceptionHandler(Exception.class)
   public ResponseEntity<String> handleException(Exception ex) {
     return ResponseEntity.badRequest().body(ex.getMessage());

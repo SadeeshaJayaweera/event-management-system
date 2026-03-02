@@ -1,5 +1,6 @@
 package com.eventflow.authservice.service;
 
+import com.eventflow.authservice.client.NotificationServiceClient;
 import com.eventflow.authservice.dto.AuthResponse;
 import com.eventflow.authservice.dto.LoginRequest;
 import com.eventflow.authservice.dto.RegisterRequest;
@@ -15,11 +16,13 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class AuthService {
   private final UserRepository userRepository;
+  private final NotificationServiceClient notificationClient;
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
   
   @Value("${jwt.secret:bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=}")
@@ -28,8 +31,9 @@ public class AuthService {
   @Value("${jwt.expiration:86400000}") // 24 hours in milliseconds
   private long jwtExpiration;
 
-  public AuthService(UserRepository userRepository) {
+  public AuthService(UserRepository userRepository, NotificationServiceClient notificationClient) {
     this.userRepository = userRepository;
+    this.notificationClient = notificationClient;
   }
 
   public AuthResponse register(RegisterRequest request) {
@@ -44,7 +48,24 @@ public class AuthService {
     user.setPasswordHash(encoder.encode(request.getPassword()));
     user.setStatus("active");
 
+    
     User saved = userRepository.save(user);
+    
+    // Send notifications to all admins
+    try {
+      List<User> admins = userRepository.findByRole("admin");
+      for (User admin : admins) {
+        notificationClient.sendInAppNotification(
+          admin.getId(),
+          "NEW_USER_REGISTERED",
+          "New user registered: " + saved.getName(),
+          "/admin/users/" + saved.getId()
+        );
+      }
+    } catch (Exception e) {
+      System.err.println("Failed to send user registration notifications: " + e.getMessage());
+    }
+    
     return new AuthResponse(saved.getId(), saved.getName(), saved.getRole(), issueToken(saved));
   }
 
@@ -61,6 +82,13 @@ public class AuthService {
     }
 
     return new AuthResponse(user.getId(), user.getName(), user.getRole(), issueToken(user));
+  }
+
+  public List<User> getUsersByRole(String role) {
+    if (role != null && !role.isEmpty()) {
+      return userRepository.findByRole(role);
+    }
+    return userRepository.findAll();
   }
 
   private String issueToken(User user) {

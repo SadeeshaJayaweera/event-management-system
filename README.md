@@ -33,10 +33,11 @@ EventFlow is a comprehensive event management system featuring microservices arc
 
 **Key Highlights:**
 - ✅ Fully implemented JWT authentication & authorization
-- ✅ 9 microservices with service discovery
+- ✅ 8 microservices with service discovery
 - ✅ Role-based access (Admin, Organizer, Attendee)
 - ✅ Real-time analytics and dashboard
 - ✅ Complete booking and ticketing system
+- ✅ User profile management with preferences
 - ✅ Docker-ready production deployment
 
 ---
@@ -82,11 +83,11 @@ Frontend (React/Vite) → API Gateway (JWT Auth) → Microservices → H2 Databa
 | **Config Server** | 8888 | Centralized configuration |
 | **Auth Service** | 8082 | User authentication & JWT |
 | **Event Service** | 8081 | Event management |
-| **Attendee Service** | 8083 | Attendee management |
 | **Ticket Service** | 8084 | Ticket operations |
 | **Notification Service** | 8085 | Event notifications |
 | **Analytics Service** | 8086 | Analytics & reporting |
 | **Admin Service** | 8087 | Admin operations |
+| **Profile Service** | 8088 | User profile management |
 
 ### Technology Stack
 

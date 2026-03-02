@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import clsx from "clsx";
+import { NotificationBell } from "../components/NotificationBell";
+import { BroadcastMessageForm } from "../components/BroadcastMessageForm";
 
 type TabType = "overview" | "events" | "users";
 
@@ -198,20 +200,10 @@ export function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Event Status</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
-                <span className="text-sm font-medium text-gray-700">Upcoming Events</span>
-                <span className="text-xl font-bold text-green-600">{stats.upcomingEvents}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <span className="text-sm font-medium text-gray-700">Completed Events</span>
-                <span className="text-xl font-bold text-gray-600">{stats.completedEvents}</span>
-              </div>
-            </div>
-          </div>
+          {/* Broadcast Message Form */}
+          <BroadcastMessageForm />
 
+          {/* Quick Actions */}
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-3">
@@ -423,9 +415,12 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-500 mt-1">Manage events, users, and view system analytics</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-500 mt-1">Manage events, users, and view system analytics</p>
+        </div>
+        <NotificationBell />
       </div>
 
       {/* Tabs */}

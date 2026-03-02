@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { Upload, Calendar, Clock, MapPin, DollarSign, Type, FileText, Image as ImageIcon, X, ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 import { eventApi } from "../services/eventflow";
+import { useAuth } from "../contexts/AuthContext";
 
 export function CreateEvent() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -81,6 +83,7 @@ export function CreateEvent() {
         price: Number(formData.price) || 0,
         description: formData.description,
         imageUrl: formData.image || null,
+        organizerId: user?.id,
       });
       toast.success("Event created successfully!");
       navigate('/dashboard/events');
