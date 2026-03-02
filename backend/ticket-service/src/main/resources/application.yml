@@ -26,6 +26,6 @@ eureka:
 
 payhere:
   merchant-id: "1234081"
-  merchant-secret: "MjU1NDkyODg2MTExNjMxOTA2NTgxNTU3MDk3Nzc3MTM4NzY4NDA3OA=="
+  merchant-secret: "MzQ3MjQ4MzE4NDkwNTE5MjM0MzMzMjYyOTM1ODQyMTI4NzQ5MjA1"
   mode: sandbox
 

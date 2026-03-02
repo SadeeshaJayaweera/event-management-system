@@ -28,7 +28,7 @@ eureka:
 
 payhere:
   merchant-id: "1234081"
-  merchant-secret: "NjYyOTI3NjQzNDIxOTM0NTM3MjEyNDA5MDk5OTkyMzQzMTcyNTI3"
+  merchant-secret: "MzQ3MjQ4MzE4NDkwNTE5MjM0MzMzMjYyOTM1ODQyMTI4NzQ5MjA1"
   sandbox: true
   return-url: "http://localhost:3000/payment/success"
   cancel-url: "http://localhost:3000/attendee"
