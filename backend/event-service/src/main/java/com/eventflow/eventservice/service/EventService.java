@@ -24,7 +24,7 @@ public class EventService {
 
   public Event get(UUID id) {
     return eventRepository.findById(id)
-      .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        .orElseThrow(() -> new IllegalArgumentException("Event not found"));
   }
 
   public Event create(EventCreateRequest request) {
@@ -51,8 +51,10 @@ public class EventService {
     event.setDate(request.getDate());
     event.setTime(request.getTime());
     event.setLocation(request.getLocation());
-    event.setPrice(request.getPrice());
-    event.setStatus(request.getStatus());
+    if (request.getPrice() != null)
+      event.setPrice(request.getPrice());
+    if (request.getStatus() != null)
+      event.setStatus(request.getStatus());
     event.setDescription(request.getDescription());
     event.setImageUrl(request.getImageUrl());
     event.setUpdatedAt(LocalDateTime.now());
@@ -64,4 +66,3 @@ public class EventService {
     eventRepository.deleteById(id);
   }
 }
-

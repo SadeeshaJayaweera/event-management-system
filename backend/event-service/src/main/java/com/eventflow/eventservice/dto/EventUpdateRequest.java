@@ -23,10 +23,7 @@ public class EventUpdateRequest {
   @NotBlank
   private String location;
 
-  @NotNull
   private BigDecimal price;
-
-  @NotBlank
   private String status;
 
   @NotBlank
@@ -106,4 +103,3 @@ public class EventUpdateRequest {
     this.imageUrl = imageUrl;
   }
 }
-
