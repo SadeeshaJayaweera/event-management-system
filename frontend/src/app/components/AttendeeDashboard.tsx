@@ -20,6 +20,7 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
   const [cancelledPayments, setCancelledPayments] = useState<PaymentStatus[]>([]);
   const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
   const [refundedOrderIds, setRefundedOrderIds] = useState<Set<string>>(new Set());
+  const [pendingRefundPayment, setPendingRefundPayment] = useState<PaymentStatus | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -224,6 +225,75 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
+            {/* Refund Confirmation Modal */}
+            {pendingRefundPayment && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+                      <RefreshCw className="w-8 h-8 text-amber-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Refund</h3>
+                    <p className="text-gray-500 text-sm mb-5">
+                      You are about to request a refund for the cancelled event:
+                    </p>
+
+                    {/* Refund Details Card */}
+                    <div className="w-full bg-gray-50 rounded-xl p-4 text-left mb-6 border border-gray-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Event</span>
+                        <span className="font-semibold text-gray-900">{pendingRefundPayment.eventTitle}</span>
+                      </div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Refund Amount</span>
+                        <span className="font-bold text-green-700 text-lg">
+                          {pendingRefundPayment.currency} {Number(pendingRefundPayment.amount).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Order ID</span>
+                        <span className="text-xs text-gray-600 font-mono">{pendingRefundPayment.orderId}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 w-full">
+                      <button
+                        onClick={() => setPendingRefundPayment(null)}
+                        disabled={refundingOrderId === pendingRefundPayment.orderId}
+                        className="flex-1 py-2.5 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        disabled={refundingOrderId === pendingRefundPayment.orderId}
+                        onClick={async () => {
+                          const orderId = pendingRefundPayment.orderId;
+                          setRefundingOrderId(orderId);
+                          try {
+                            await paymentApi.refundPayment(orderId);
+                            setRefundedOrderIds(prev => new Set([...prev, orderId]));
+                            setPendingRefundPayment(null);
+                            toast.success('Refund processed successfully!');
+                          } catch {
+                            toast.error('Refund failed. Please contact support.');
+                          } finally {
+                            setRefundingOrderId(null);
+                          }
+                        }}
+                        className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
+                      >
+                        {refundingOrderId === pendingRefundPayment.orderId ? (
+                          <><RefreshCw className="w-4 h-4 animate-spin" /> Processing...</>
+                        ) : (
+                          <>✓ Confirm Refund</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">My Tickets</h2>
               <span className="text-gray-500 text-sm">{myTickets.length} active tickets</span>
@@ -279,25 +349,10 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
                       <div className="flex-shrink-0">
                         <button
                           disabled={refundingOrderId === payment.orderId}
-                          onClick={async () => {
-                            setRefundingOrderId(payment.orderId);
-                            try {
-                              await paymentApi.refundPayment(payment.orderId);
-                              setRefundedOrderIds(prev => new Set([...prev, payment.orderId]));
-                              toast.success('Refund processed successfully!');
-                            } catch {
-                              toast.error('Refund failed. Please contact support.');
-                            } finally {
-                              setRefundingOrderId(null);
-                            }
-                          }}
+                          onClick={() => setPendingRefundPayment(payment)}
                           className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm"
                         >
-                          {refundingOrderId === payment.orderId ? (
-                            <><RefreshCw className="w-4 h-4 animate-spin" /> Processing...</>
-                          ) : (
-                            <>Refund My Money</>
-                          )}
+                          Refund My Money
                         </button>
                       </div>
                     </div>

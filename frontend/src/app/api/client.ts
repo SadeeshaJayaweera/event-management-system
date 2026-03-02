@@ -47,8 +47,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       return undefined as T;
     }
 
-    const data = await response.json();
-    return data as T;
+    const contentType = response.headers.get("content-type");
+    const text = await response.text();
+    if (!text || text.trim() === "") {
+      return undefined as T;
+    }
+    if (contentType && contentType.includes("application/json")) {
+      return JSON.parse(text) as T;
+    }
+    return text as unknown as T;
   } catch (error) {
     console.error(`❌ API Request Failed:`, error);
     if (error instanceof TypeError && error.message.includes('fetch')) {
