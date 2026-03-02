@@ -61,6 +61,7 @@ export const authApi = {
 
 export const eventApi = {
   list: () => apiRequest<EventItem[]>("/api/events"),
+  get: (id: string) => apiRequest<EventItem>(`/api/events/${id}`),
   create: (payload: {
     title: string;
     category: string;
@@ -71,6 +72,16 @@ export const eventApi = {
     description: string;
     imageUrl?: string | null;
   }) => apiRequest<EventItem>("/api/events", { method: "POST", body: payload }),
+  update: (id: string, payload: {
+    title: string;
+    category: string;
+    date: string;
+    time: string;
+    location: string;
+    description: string;
+    imageUrl?: string | null;
+  }) => apiRequest<EventItem>(`/api/events/${id}`, { method: "PUT", body: payload }),
+  delete: (id: string) => apiRequest<void>(`/api/events/${id}`, { method: "DELETE" }),
 };
 
 export const attendeeApi = {
@@ -197,6 +208,13 @@ export const paymentApi = {
   getPaymentStatus: (orderId: string) =>
     apiRequest<PaymentStatus>(`/api/payment/status/${orderId}`),
 
+  getByEventId: (eventId: string) =>
+    apiRequest<PaymentStatus[]>(`/api/payment/event/${eventId}`),
+
   simulatePaymentSuccess: (orderId: string) =>
     apiRequest<void>(`/api/payment/dev/force-complete/${orderId}`, { method: "POST" }),
+
+  refundPayment: (orderId: string) =>
+    apiRequest<void>(`/api/payment/refund/${orderId}`, { method: "POST" }),
 };
+

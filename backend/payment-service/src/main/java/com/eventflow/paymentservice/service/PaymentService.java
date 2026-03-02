@@ -141,6 +141,22 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found for orderId: " + orderId));
     }
 
+    public List<Payment> getByEventId(UUID eventId) {
+        return paymentRepository.findByEventId(eventId);
+    }
+
+    public void refundPayment(String orderId) {
+        Optional<Payment> paymentOpt = paymentRepository.findByOrderId(orderId);
+        if (paymentOpt.isEmpty()) {
+            throw new IllegalArgumentException("Payment not found for orderId: " + orderId);
+        }
+        Payment payment = paymentOpt.get();
+        payment.setStatus("REFUNDED");
+        payment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+        log.info("Payment refunded for order {}", orderId);
+    }
+
     public void simulateNotificationForDev(String orderId) {
         if (!sandbox)
             return; // Only allow in sandbox mode

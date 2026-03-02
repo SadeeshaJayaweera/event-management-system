@@ -13,7 +13,7 @@ import { Checkout } from "./components/Checkout";
 import { PaymentSuccess } from "./components/PaymentSuccess";
 import { Menu, Calendar } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import { authApi, eventApi, type AuthResponse, type EventItem, type UserRole } from "./api/eventflow";
+import { authApi, eventApi, paymentApi, type AuthResponse, type EventItem, type UserRole } from "./api/eventflow";
 
 interface User {
   id: string;
@@ -101,6 +101,29 @@ export default function App() {
   };
 
   const handleCreateEvent = async (newEventData: any) => {
+    // If editing an existing event
+    if (newEventData.id) {
+      try {
+        const updated = await eventApi.update(newEventData.id, {
+          title: newEventData.title,
+          category: newEventData.category,
+          date: newEventData.date,
+          time: newEventData.time,
+          location: newEventData.location,
+          description: newEventData.description,
+          imageUrl: newEventData.image || null,
+        });
+        setEvents(events.map(e => e.id === updated.id ? updated : e));
+        setEditingEvent(null);
+        setActiveTab("events");
+        toast.success("Event updated successfully!");
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to update event");
+      }
+      return;
+    }
+    // Creating a new event
     try {
       const createdEvent = await eventApi.create({
         title: newEventData.title,
@@ -121,11 +144,29 @@ export default function App() {
     }
   };
 
+  const handleDeleteEvent = async (event: EventItem) => {
+    try {
+      // Get payments for this event to mark refunds
+      const payments = await paymentApi.getByEventId(event.id).catch(() => []);
+      // Call delete on event
+      await eventApi.delete(event.id);
+      setEvents(prev => prev.filter(e => e.id !== event.id));
+      if (payments.length > 0) {
+        toast.success(`Event deleted. ${payments.length} ticket holder(s) can now request a refund.`);
+      } else {
+        toast.success("Event deleted successfully.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete event");
+    }
+  };
+
   const renderOrganizerContent = () => {
     switch (activeTab) {
       case "dashboard": return <Dashboard events={events} />;
-      case "events": return <EventList events={events} userRole={user?.role} onCreateClick={() => setActiveTab("create-event")} onBuyTickets={handleBuyTickets} onEditEvent={(event) => { setEditingEvent(event); setActiveTab("create-event"); }} />;
-      case "create-event": return <CreateEvent onSave={handleCreateEvent} onCancel={() => { setActiveTab("events"); setEditingEvent(null); }} />;
+      case "events": return <EventList events={events} userRole={user?.role} onCreateClick={() => setActiveTab("create-event")} onBuyTickets={handleBuyTickets} onEditEvent={(event) => { setEditingEvent(event); setActiveTab("create-event"); }} onDeleteEvent={handleDeleteEvent} />;
+      case "create-event": return <CreateEvent initialData={editingEvent} onSave={handleCreateEvent} onCancel={() => { setActiveTab("events"); setEditingEvent(null); }} />;
       case "attendees": return <Attendees />;
       case "settings": return <Settings />;
       default: return <Dashboard events={events} />;

@@ -1,5 +1,5 @@
-import { eventApi, ticketApi, type EventItem, type TicketItem } from "../api/eventflow";
-import { Search, Calendar, MapPin, Heart, Ticket, LogOut, CheckCircle } from "lucide-react";
+import { eventApi, ticketApi, paymentApi, type EventItem, type TicketItem, type PaymentStatus } from "../api/eventflow";
+import { Search, Calendar, MapPin, Heart, Ticket, LogOut, CheckCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -17,6 +17,9 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
   const [likedEvents, setLikedEvents] = useState<string[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [myTickets, setMyTickets] = useState<EventItem[]>([]);
+  const [cancelledPayments, setCancelledPayments] = useState<PaymentStatus[]>([]);
+  const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
+  const [refundSuccessOrderId, setRefundSuccessOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -30,6 +33,24 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
         const ticketEventIds = new Set(ticketsData.map((ticket) => ticket.eventId));
         const userTicketedEvents = eventsData.filter(e => ticketEventIds.has(e.id));
         setMyTickets(userTicketedEvents);
+
+        // Detect tickets for deleted/cancelled events
+        // These are ticketEventIds NOT found in the current events list
+        const allEventIds = new Set(eventsData.map(e => e.id));
+        const deletedEventIds = [...ticketEventIds].filter(id => !allEventIds.has(id));
+        if (deletedEventIds.length > 0) {
+          // Try to find payments for these events — look at user's payments
+          // We'll search by userId from payment API (use a best-effort approach)
+          const eventPayments: PaymentStatus[] = [];
+          for (const eventId of deletedEventIds) {
+            try {
+              const payments = await paymentApi.getByEventId(eventId);
+              const myPayments = payments.filter(p => p.userId === user.id && p.status === 'COMPLETED');
+              eventPayments.push(...myPayments);
+            } catch { }
+          }
+          setCancelledPayments(eventPayments);
+        }
       } catch (error) {
         console.error(error);
         toast.error("Failed to load data");
@@ -208,20 +229,67 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
               <span className="text-gray-500 text-sm">{myTickets.length} active tickets</span>
             </div>
 
-            {myTickets.length === 0 ? (
+            {myTickets.length === 0 && cancelledPayments.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-2xl border border-gray-100 border-dashed">
                 <Ticket className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900">No tickets yet</h3>
                 <p className="text-gray-500 mt-2 mb-6">Browse events and book your first experience!</p>
-                <button
-                  onClick={() => setActiveTab('discover')}
-                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                >
+                <button onClick={() => setActiveTab('discover')}
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
                   Browse Events
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
+                {/* Cancelled event refund banners */}
+                {cancelledPayments.map((payment) => (
+                  <div key={payment.orderId} className="bg-red-50 border border-red-200 rounded-xl p-5 flex flex-col md:flex-row gap-4 items-start">
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-red-900 text-lg">This event is no longer available</h3>
+                      <p className="text-red-700 text-sm mt-1">
+                        <span className="font-semibold">{payment.eventTitle}</span> has been cancelled by the organizer.
+                        You are eligible for a full refund of <span className="font-semibold">{payment.currency} {Number(payment.amount).toFixed(2)}</span>.
+                      </p>
+                      <p className="text-red-500 text-xs mt-1">Order: {payment.orderId}</p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {refundSuccessOrderId === payment.orderId ? (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-semibold">
+                          <CheckCircle className="w-4 h-4" />
+                          Refund Successful!
+                        </div>
+                      ) : (
+                        <button
+                          disabled={refundingOrderId === payment.orderId}
+                          onClick={async () => {
+                            setRefundingOrderId(payment.orderId);
+                            try {
+                              await paymentApi.refundPayment(payment.orderId);
+                              setRefundSuccessOrderId(payment.orderId);
+                              toast.success('Refund processed successfully!');
+                            } catch {
+                              toast.error('Refund failed. Please contact support.');
+                            } finally {
+                              setRefundingOrderId(null);
+                            }
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                        >
+                          {refundingOrderId === payment.orderId ? (
+                            <><RefreshCw className="w-4 h-4 animate-spin" /> Processing...</>
+                          ) : (
+                            <>Refund My Money</>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Active tickets */}
                 {myTickets.map((event) => (
                   <div key={event.id} className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow">
                     <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">

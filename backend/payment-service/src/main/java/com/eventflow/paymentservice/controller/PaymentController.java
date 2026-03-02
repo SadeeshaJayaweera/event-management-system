@@ -63,6 +63,18 @@ public class PaymentController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/event/{eventId}")
+    public ResponseEntity<java.util.List<PaymentResponse>> getByEventId(@PathVariable java.util.UUID eventId) {
+        return ResponseEntity.ok(
+                paymentService.getByEventId(eventId).stream().map(this::toResponse).toList());
+    }
+
+    @PostMapping("/refund/{orderId}")
+    public ResponseEntity<Void> refundPayment(@PathVariable String orderId) {
+        paymentService.refundPayment(orderId);
+        return ResponseEntity.ok().build();
+    }
+
     private PaymentResponse toResponse(Payment payment) {
         PaymentResponse resp = new PaymentResponse();
         resp.setId(payment.getId());
