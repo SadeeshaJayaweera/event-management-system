@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, getAuthToken, API_BASE_URL } from "./client";
 
 export type UserRole = "organizer" | "attendee" | "admin";
 
@@ -127,6 +127,31 @@ export const ticketApi = {
       method: "POST",
       body: payload
     }),
+
+  /**
+   * Downloads the PDF ticket (with QR code) for the given ticket ID.
+   * Triggers a browser file-save dialogue automatically.
+   */
+  download: async (ticketId: string): Promise<void> => {
+    const headers: Record<string, string> = {};
+    const token = getAuthToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/download`, { headers });
+    if (!response.ok) {
+      throw new Error(`Failed to download ticket: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `ticket-${ticketId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 };
 
 export const analyticsApi = {

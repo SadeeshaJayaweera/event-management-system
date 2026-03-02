@@ -1,15 +1,18 @@
 import { eventApi, ticketApi, type EventItem } from "../services/eventflow";
-import { Calendar, MapPin, Ticket, CheckCircle } from "lucide-react";
+import { Calendar, MapPin, Ticket, CheckCircle, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 
+type TicketWithEvent = EventItem & { ticketId: string };
+
 export function MyTickets() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [myTickets, setMyTickets] = useState<EventItem[]>([]);
+  const [myTickets, setMyTickets] = useState<TicketWithEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -23,7 +26,12 @@ export function MyTickets() {
         ]);
 
         const ticketEventIds = new Set(ticketsData.map((ticket) => ticket.eventId));
-        const userTicketedEvents = eventsData.filter(e => ticketEventIds.has(e.id));
+        const userTicketedEvents: TicketWithEvent[] = eventsData
+          .filter(e => ticketEventIds.has(e.id))
+          .map(e => {
+            const ticket = ticketsData.find(t => t.eventId === e.id)!;
+            return { ...e, ticketId: ticket.id };
+          });
         setMyTickets(userTicketedEvents);
       } catch (error) {
         console.error(error);
@@ -35,6 +43,19 @@ export function MyTickets() {
 
     void loadTickets();
   }, [user?.id]);
+
+  const handleDownload = async (ticketId: string, eventTitle: string) => {
+    setDownloadingId(ticketId);
+    try {
+      await ticketApi.download(ticketId);
+      toast.success(`Ticket for "${eventTitle}" downloaded!`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to download ticket. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -101,9 +122,22 @@ export function MyTickets() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
-                    <Ticket className="w-4 h-4 mr-2" />
-                    View Ticket
+                  <button
+                    onClick={() => handleDownload(event.ticketId, event.title)}
+                    disabled={downloadingId === event.ticketId}
+                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {downloadingId === event.ticketId ? (
+                      <>
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Ticket
+                      </>
+                    )}
                   </button>
                   <button className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
                     Add to Calendar
