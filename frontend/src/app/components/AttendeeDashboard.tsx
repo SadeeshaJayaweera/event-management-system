@@ -24,33 +24,27 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [eventsData, ticketsData]: [EventItem[], TicketItem[]] = await Promise.all([
+        // Load events and user's payments in parallel
+        const [eventsData, userPayments]: [EventItem[], PaymentStatus[]] = await Promise.all([
           eventApi.list(),
-          ticketApi.list({ attendeeId: user.id }),
+          paymentApi.getByUserId(user.id).catch(() => [] as PaymentStatus[]),
         ]);
         setEvents(eventsData);
 
-        const ticketEventIds = new Set(ticketsData.map((ticket) => ticket.eventId));
+        // Build a set of current event IDs
+        const allEventIds = new Set(eventsData.map(e => e.id));
+
+        // Find COMPLETED payments belonging to this user for events that no longer exist
+        const cancelled = userPayments.filter(
+          p => p.status === 'COMPLETED' && !allEventIds.has(p.eventId)
+        );
+        setCancelledPayments(cancelled);
+
+        // For active tickets, load from ticket service as normal
+        const ticketsData: TicketItem[] = await ticketApi.list({ attendeeId: user.id }).catch(() => []);
+        const ticketEventIds = new Set(ticketsData.map(t => t.eventId));
         const userTicketedEvents = eventsData.filter(e => ticketEventIds.has(e.id));
         setMyTickets(userTicketedEvents);
-
-        // Detect tickets for deleted/cancelled events
-        // These are ticketEventIds NOT found in the current events list
-        const allEventIds = new Set(eventsData.map(e => e.id));
-        const deletedEventIds = [...ticketEventIds].filter(id => !allEventIds.has(id));
-        if (deletedEventIds.length > 0) {
-          // Try to find payments for these events — look at user's payments
-          // We'll search by userId from payment API (use a best-effort approach)
-          const eventPayments: PaymentStatus[] = [];
-          for (const eventId of deletedEventIds) {
-            try {
-              const payments = await paymentApi.getByEventId(eventId);
-              const myPayments = payments.filter(p => p.userId === user.id && p.status === 'COMPLETED');
-              eventPayments.push(...myPayments);
-            } catch { }
-          }
-          setCancelledPayments(eventPayments);
-        }
       } catch (error) {
         console.error(error);
         toast.error("Failed to load data");
@@ -243,25 +237,40 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
               <div className="space-y-4">
                 {/* Cancelled event refund banners */}
                 {cancelledPayments.map((payment) => (
-                  <div key={payment.orderId} className="bg-red-50 border border-red-200 rounded-xl p-5 flex flex-col md:flex-row gap-4 items-start">
-                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <AlertTriangle className="w-6 h-6 text-red-600" />
+                  refundSuccessOrderId === payment.orderId ? (
+                    // Refund success — show green confirmation card with event info
+                    <div key={payment.orderId} className="bg-green-50 border border-green-200 rounded-xl p-5 flex flex-col md:flex-row gap-4 items-center animate-in fade-in duration-500">
+                      <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="w-8 h-8 text-green-600" />
+                      </div>
+                      <div className="flex-1 text-center md:text-left">
+                        <h3 className="font-bold text-green-900 text-lg">Refund Processed Successfully!</h3>
+                        <p className="text-green-700 text-sm mt-1">
+                          Your refund of <span className="font-semibold">{payment.currency} {Number(payment.amount).toFixed(2)}</span> for{' '}
+                          <span className="font-semibold">"{payment.eventTitle}"</span> has been processed.
+                        </p>
+                        <p className="text-green-500 text-xs mt-1">Order: {payment.orderId} • Refund ID: REF-{payment.orderId.slice(-8).toUpperCase()}</p>
+                      </div>
+                      <span className="px-3 py-1.5 bg-green-200 text-green-800 text-xs font-bold rounded-full uppercase tracking-wide flex-shrink-0">
+                        ✓ Refunded
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-red-900 text-lg">This event is no longer available</h3>
-                      <p className="text-red-700 text-sm mt-1">
-                        <span className="font-semibold">{payment.eventTitle}</span> has been cancelled by the organizer.
-                        You are eligible for a full refund of <span className="font-semibold">{payment.currency} {Number(payment.amount).toFixed(2)}</span>.
-                      </p>
-                      <p className="text-red-500 text-xs mt-1">Order: {payment.orderId}</p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      {refundSuccessOrderId === payment.orderId ? (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-semibold">
-                          <CheckCircle className="w-4 h-4" />
-                          Refund Successful!
-                        </div>
-                      ) : (
+                  ) : (
+                    // Cancellation notice with Refund button
+                    <div key={payment.orderId} className="bg-red-50 border border-red-200 rounded-xl p-5 flex flex-col md:flex-row gap-4 items-start">
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-red-900 text-lg">This event is no longer available</h3>
+                        <p className="text-red-700 text-sm mt-1">
+                          <span className="font-semibold">"{payment.eventTitle}"</span> has been cancelled by the organizer.
+                          You are eligible for a full refund of{' '}
+                          <span className="font-semibold">{payment.currency} {Number(payment.amount).toFixed(2)}</span>.
+                        </p>
+                        <p className="text-red-500 text-xs mt-1">Order: {payment.orderId}</p>
+                      </div>
+                      <div className="flex-shrink-0">
                         <button
                           disabled={refundingOrderId === payment.orderId}
                           onClick={async () => {
@@ -284,10 +293,11 @@ export function AttendeeDashboard({ user, onLogout, onBuyTickets, initialTab = '
                             <>Refund My Money</>
                           )}
                         </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )
                 ))}
+
 
                 {/* Active tickets */}
                 {myTickets.map((event) => (

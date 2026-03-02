@@ -145,6 +145,10 @@ public class PaymentService {
         return paymentRepository.findByEventId(eventId);
     }
 
+    public List<Payment> getByUserId(UUID userId) {
+        return paymentRepository.findByUserId(userId);
+    }
+
     public void refundPayment(String orderId) {
         Optional<Payment> paymentOpt = paymentRepository.findByOrderId(orderId);
         if (paymentOpt.isEmpty()) {

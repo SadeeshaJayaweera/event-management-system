@@ -75,6 +75,12 @@ public class PaymentController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<java.util.List<PaymentResponse>> getByUserId(@PathVariable java.util.UUID userId) {
+        return ResponseEntity.ok(
+                paymentService.getByUserId(userId).stream().map(this::toResponse).toList());
+    }
+
     private PaymentResponse toResponse(Payment payment) {
         PaymentResponse resp = new PaymentResponse();
         resp.setId(payment.getId());

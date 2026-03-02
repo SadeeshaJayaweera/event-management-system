@@ -214,6 +214,9 @@ export const paymentApi = {
   simulatePaymentSuccess: (orderId: string) =>
     apiRequest<void>(`/api/payment/dev/force-complete/${orderId}`, { method: "POST" }),
 
+  getByUserId: (userId: string) =>
+    apiRequest<PaymentStatus[]>(`/api/payment/user/${userId}`),
+
   refundPayment: (orderId: string) =>
     apiRequest<void>(`/api/payment/refund/${orderId}`, { method: "POST" }),
 };
