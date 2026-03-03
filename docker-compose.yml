@@ -106,7 +106,7 @@ services:
   payment-service:
     build: ./backend/payment-service
     ports:
-      - "8089:8089"
+      - "8083:8083"
     depends_on:
       - discovery
     environment:

@@ -83,6 +83,7 @@ Frontend (React/Vite) → API Gateway (JWT Auth) → Microservices → H2 Databa
 | **Config Server** | 8888 | Centralized configuration |
 | **Auth Service** | 8082 | User authentication & JWT |
 | **Event Service** | 8081 | Event management |
+| **Payment Service** | 8083 | PayHere payment integration |
 | **Ticket Service** | 8084 | Ticket operations |
 | **Notification Service** | 8085 | Event notifications |
 | **Analytics Service** | 8086 | Analytics & reporting |

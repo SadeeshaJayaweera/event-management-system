@@ -17,7 +17,7 @@ The Payment Service is responsible for generating secure payment hashes and mana
 
 The service is configured via `application.yml`:
 
-- **Port**: 8089
+- **Port**: 8083
 - **Service Name**: payment-service
 - **PayHere Merchant ID**: Configurable for sandbox/production
 - **PayHere Merchant Secret**: Encrypted secret for hash generation
@@ -75,5 +75,5 @@ mvn spring-boot:run
 
 ```bash
 docker build -t payment-service .
-docker run -p 8089:8089 payment-service
+docker run -p 8083:8083 payment-service
 ```
