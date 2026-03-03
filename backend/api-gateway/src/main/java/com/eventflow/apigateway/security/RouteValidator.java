@@ -11,6 +11,7 @@ public class RouteValidator {
     // List of endpoints that don't require authentication
     private static final List<String> OPEN_API_ENDPOINTS = List.of(
             "/api/auth", // All auth endpoints (login, register)
+            "/api/payment", // Payment endpoints
             "/api/events/health", // Health check
             "/api/attendees/health", // Health check
             "/api/tickets/health", // Health check

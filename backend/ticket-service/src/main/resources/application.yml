@@ -33,9 +33,4 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-# PayHere Payment Gateway Configuration
-payhere:
-  merchant-id: "1234081"
-  merchant-secret: "MjU1NDkyODg2MTExNjMxOTA2NTgxNTU3MDk3Nzc3MTM4NzY4NDA3OA=="
-  mode: sandbox
 

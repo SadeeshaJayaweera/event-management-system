@@ -1,0 +1,26 @@
+server:
+  port: 8089
+
+spring:
+  application:
+    name: payment-service
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    preferIpAddress: true
+
+# PayHere Payment Gateway Configuration
+payhere:
+  merchant-id: "1234081"
+  merchant-secret: "MjU1NDkyODg2MTExNjMxOTA2NTgxNTU3MDk3Nzc3MTM4NzY4NDA3OA=="
+  mode: sandbox
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

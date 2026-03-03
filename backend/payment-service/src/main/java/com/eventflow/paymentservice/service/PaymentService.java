@@ -1,4 +1,4 @@
-package com.eventflow.ticketservice.service;
+package com.eventflow.paymentservice.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,6 +16,9 @@ public class PaymentService {
     @Value("${payhere.merchant-secret}")
     private String merchantSecret;
 
+    @Value("${payhere.mode:sandbox}")
+    private String mode;
+
     public String generateHash(String orderId, double amount, String currency) {
         String formattedAmount = new DecimalFormat("0.00").format(amount);
         String toHash = merchantId + orderId + formattedAmount + currency + getMd5(merchantSecret).toUpperCase();
@@ -24,6 +27,10 @@ public class PaymentService {
 
     public String getMerchantId() {
         return merchantId;
+    }
+
+    public String getMode() {
+        return mode;
     }
 
     private String getMd5(String input) {

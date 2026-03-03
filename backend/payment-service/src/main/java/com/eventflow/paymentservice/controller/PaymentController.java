@@ -1,6 +1,6 @@
-package com.eventflow.ticketservice.controller;
+package com.eventflow.paymentservice.controller;
 
-import com.eventflow.ticketservice.service.PaymentService;
+import com.eventflow.paymentservice.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/tickets/payment")
-@CrossOrigin(origins = "*") // Allow frontend access
+@RequestMapping("/api/payment")
+@CrossOrigin(origins = "*")
 public class PaymentController {
 
     @Autowired
@@ -31,9 +31,16 @@ public class PaymentController {
         response.put("amount", formattedAmount);
         response.put("currency", currency);
         response.put("hash", hash);
-        // Add sandbox URL if needed by frontend, or frontend can hardcode it
         response.put("action_url", "https://sandbox.payhere.lk/pay/checkout");
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> health() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("service", "payment-service");
         return ResponseEntity.ok(response);
     }
 }

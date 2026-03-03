@@ -388,6 +388,6 @@ export const paymentApi = {
       currency: string;
       hash: string;
       action_url: string;
-    }>("/api/tickets/payment/initiate", { method: "POST", body: payload }),
+    }>("/api/payment/initiate", { method: "POST", body: payload }),
 };
 
