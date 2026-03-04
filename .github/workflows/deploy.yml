@@ -1,4 +1,4 @@
-name: Build and Deploy to Azure
+name: Build and Deploy to Azure Container Apps
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY_NAME: mycr.azurecr.io
+  REGISTRY_NAME: eventmgmtacr.azurecr.io
   RESOURCE_GROUP: event-management-rg
   CONTAINER_APP_ENV: event-app-env
 
@@ -25,20 +25,27 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Docker Compose Build
+      - name: Build and Tag with Docker Compose
         run: docker-compose build
 
       - name: Tag and Push Docker Images
         run: |
           services=(
-            "config-server" "eureka-server" "api-gateway" 
-            "auth-service" "event-service" "ticket-service" 
-            "notification-service" "analytics-service" 
-            "payment-service" "admin-service" "profile-service" "frontend"
+            "api-gateway" "auth-service" "profile-service" 
+            "event-service" "ticket-service" "notification-service" 
+            "analytics-service" "review-service" "frontend"
           )
           for service in "${services[@]}"; do
-            docker tag ${service} ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }}
+            # docker-compose build creates images with 'event-management-system_<service>:latest' or similar. 
+            # We assume the images are named <service>:latest or similar based on docker-compose.yml 
+            # If docker-compose builds them as event-management-system-<service>, you must tag correctly.
+            # Assuming docker-compose image names:
+            docker tag ${service}:latest ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }}
             docker push ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }}
+            
+            # Tag as latest as well
+            docker tag ${service}:latest ${{ env.REGISTRY_NAME }}/${service}:latest
+            docker push ${{ env.REGISTRY_NAME }}/${service}:latest
           done
 
   deploy:
@@ -52,8 +59,15 @@ jobs:
 
       - name: Deploy to Azure Container Apps
         run: |
-          # Note: this requires your ACA setup beforehand. This is an example of updating the container images.
-          az containerapp update -n event-service -g ${{ env.RESOURCE_GROUP }} --image ${{ env.REGISTRY_NAME }}/event-service:${{ github.sha }}
-          az containerapp update -n api-gateway -g ${{ env.RESOURCE_GROUP }} --image ${{ env.REGISTRY_NAME }}/api-gateway:${{ github.sha }}
-          az containerapp update -n frontend -g ${{ env.RESOURCE_GROUP }} --image ${{ env.REGISTRY_NAME }}/frontend:${{ github.sha }}
-          # Repeat for other services as needed...
+          services=(
+            "api-gateway" "auth-service" "profile-service" 
+            "event-service" "ticket-service" "notification-service" 
+            "analytics-service" "review-service" "frontend"
+          )
+          for service in "${services[@]}"; do
+            echo "Updating Azure Container App: ${service}..."
+            az containerapp update \
+              --name ${service} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --image ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }}
+          done

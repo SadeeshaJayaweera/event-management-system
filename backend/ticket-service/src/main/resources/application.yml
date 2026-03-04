@@ -5,20 +5,15 @@ spring:
   application:
     name: ticket-service
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:/data/ticketdb;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1}
-    driverClassName: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
-    username: ${SPRING_DATASOURCE_USERNAME:sa}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.mcbdtnqldohdvzmnvvsq.supabase.co:5432/postgres?currentSchema=ticket_schema}
+    driverClassName: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:weliveonearth@}
   jpa:
-    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
     hibernate:
       ddl-auto: update
     show-sql: false
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
 
 eureka:
   client:
