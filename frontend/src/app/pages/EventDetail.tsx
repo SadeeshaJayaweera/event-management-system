@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { eventApi, ticketApi, type EventItem, type TicketItem } from "../services/eventflow";
-import { Calendar, MapPin, Users, DollarSign, ArrowLeft, User, Mail, Edit, Trash2 } from "lucide-react";
+import { eventApi, ticketApi, reviewApi, type EventItem, type TicketItem, type ReviewItem, type RatingStats } from "../services/eventflow";
+import { Calendar, MapPin, Users, DollarSign, ArrowLeft, User, Edit, Trash2, Star, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
+import { StarRating } from "../components/StarRating";
+import { ReviewForm } from "../components/ReviewForm";
+import { ReviewList } from "../components/ReviewList";
 
 export function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +17,12 @@ export function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Reviews
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [ratingStats, setRatingStats] = useState<RatingStats | null>(null);
+  const [canReview, setCanReview] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   useEffect(() => {
     const loadEventDetail = async () => {
@@ -32,6 +41,29 @@ export function EventDetail() {
         } else {
           toast.error("Event not found");
           navigate('/dashboard/events');
+          return;
+        }
+
+        // Load reviews
+        try {
+          const [reviewData, statsData] = await Promise.all([
+            reviewApi.getByEvent(id),
+            reviewApi.getRatingStats(id),
+          ]);
+          setReviews(reviewData);
+          setRatingStats(statsData);
+        } catch {
+          // reviews not critical — ignore
+        }
+
+        // Check if current user can leave a review
+        if (user?.id) {
+          try {
+            const { canReview: allowed } = await reviewApi.canReview(id, user.id);
+            setCanReview(allowed);
+          } catch {
+            // ignore
+          }
         }
       } catch (error) {
         console.error("Failed to load event details:", error);
@@ -182,6 +214,95 @@ export function EventDetail() {
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">Description</h3>
             <p className="text-gray-600 leading-relaxed">{event.description}</p>
+          </div>
+
+          {/* Reviews Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Reviews</h3>
+                {ratingStats && ratingStats.totalReviews > 0 && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <StarRating value={Math.round(ratingStats.averageRating)} readonly size="sm" />
+                    <span className="text-sm font-semibold text-gray-700">{ratingStats.averageRating.toFixed(1)}</span>
+                    <span className="text-sm text-gray-400">({ratingStats.totalReviews} {ratingStats.totalReviews === 1 ? "review" : "reviews"})</span>
+                  </div>
+                )}
+              </div>
+              {canReview && !showReviewForm && (
+                <button
+                  onClick={() => setShowReviewForm(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                >
+                  <PenLine className="w-4 h-4" />
+                  Write a Review
+                </button>
+              )}
+            </div>
+
+            {/* Rating Distribution */}
+            {ratingStats && ratingStats.totalReviews > 0 && (
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-6">
+                <div className="flex items-center gap-6">
+                  <div className="text-center">
+                    <p className="text-4xl font-extrabold text-gray-900">{ratingStats.averageRating.toFixed(1)}</p>
+                    <StarRating value={Math.round(ratingStats.averageRating)} readonly size="sm" />
+                    <p className="text-xs text-gray-400 mt-1">{ratingStats.totalReviews} ratings</p>
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const count = ratingStats.distribution[star] ?? 0;
+                      const pct = ratingStats.totalReviews > 0 ? (count / ratingStats.totalReviews) * 100 : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-2">
+                          <div className="flex items-center gap-0.5 w-14 flex-shrink-0">
+                            <span className="text-xs text-gray-500 w-3 text-right">{star}</span>
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          </div>
+                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-amber-400 rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-400 w-6 text-right">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Review Form */}
+            {showReviewForm && user && (
+              <div className="mb-6">
+                <ReviewForm
+                  eventId={id!}
+                  userId={user.id}
+                  onSuccess={(newReview) => {
+                    setReviews((prev) => [newReview, ...prev]);
+                    setCanReview(false);
+                    setShowReviewForm(false);
+                    setRatingStats(null); // will reload on next visit
+                  }}
+                  onCancel={() => setShowReviewForm(false)}
+                />
+              </div>
+            )}
+
+            {/* Review List */}
+            <ReviewList
+              reviews={reviews}
+              currentUserId={user?.id}
+              onReviewUpdated={(updated) =>
+                setReviews((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+              }
+              onReviewDeleted={(deletedId) => {
+                setReviews((prev) => prev.filter((r) => r.id !== deletedId));
+                setCanReview(true);
+              }}
+            />
           </div>
 
           {/* Tickets List */}

@@ -147,7 +147,7 @@ export function AttendeeDashboard() {
             {myTicketedEvents.slice(0, 4).map((event) => {
               const eventTicketCount = myTickets.filter(t => t.eventId === event.id).length;
               return (
-                <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+                <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group cursor-pointer" onClick={() => navigate(`/attendee/events/${event.id}`)}>
                   <div className="flex flex-col sm:flex-row gap-4 p-4">
                     <div className="w-full sm:w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
                       <img src={event.imageUrl || ""} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -196,7 +196,7 @@ export function AttendeeDashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {upcomingEvents.slice(0, 6).map((event) => (
-            <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+            <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group cursor-pointer" onClick={() => navigate(`/attendee/events/${event.id}`)}>
               <div className="relative h-40 overflow-hidden">
                 <img src={event.imageUrl || ""} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold text-gray-900 bg-white/90 shadow-sm">

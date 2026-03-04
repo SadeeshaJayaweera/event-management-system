@@ -124,10 +124,13 @@ export function DiscoverEvents() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
               <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full">
-                <div className="relative h-48 overflow-hidden">
+                <div
+                  className="relative h-48 overflow-hidden cursor-pointer"
+                  onClick={() => navigate(`/attendee/events/${event.id}`)}
+                >
                   <img src={event.imageUrl || ""} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   <button
-                    onClick={() => toggleLike(event.id)}
+                    onClick={(e) => { e.stopPropagation(); toggleLike(event.id); }}
                     className="absolute top-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow-sm transition-colors z-10"
                   >
                     <Heart className={clsx("w-4 h-4", likedEvents.includes(event.id) ? "fill-red-500 text-red-500" : "text-gray-400")} />
@@ -144,7 +147,12 @@ export function DiscoverEvents() {
                     </span>
                   </div>
                   
-                  <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">{event.title}</h3>
+                  <button
+                    className="text-left font-bold text-lg text-gray-900 mb-2 line-clamp-1 hover:text-indigo-600 transition-colors"
+                    onClick={() => navigate(`/attendee/events/${event.id}`)}
+                  >
+                    {event.title}
+                  </button>
                   <p className="text-gray-500 text-sm mb-4 line-clamp-2">{event.description}</p>
                   
                   <div className="mt-auto space-y-2 text-sm text-gray-600">
@@ -158,18 +166,26 @@ export function DiscoverEvents() {
                     </div>
                   </div>
 
-                  <button 
-                    onClick={() => handleBuyTicket(event)}
-                    disabled={myTicketEventIds.has(event.id)}
-                    className={clsx(
-                      "w-full mt-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                      myTicketEventIds.has(event.id)
-                        ? "bg-green-50 text-green-700 border border-green-200 cursor-not-allowed"
-                        : "bg-gray-900 text-white hover:bg-gray-800"
-                    )}
-                  >
-                    {myTicketEventIds.has(event.id) ? "Ticket Purchased" : "Get Tickets"}
-                  </button>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => navigate(`/attendee/events/${event.id}`)}
+                      className="flex-1 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      onClick={() => handleBuyTicket(event)}
+                      disabled={myTicketEventIds.has(event.id)}
+                      className={clsx(
+                        "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+                        myTicketEventIds.has(event.id)
+                          ? "bg-green-50 text-green-700 border border-green-200 cursor-not-allowed"
+                          : "bg-gray-900 text-white hover:bg-gray-800"
+                      )}
+                    >
+                      {myTicketEventIds.has(event.id) ? "✓ Purchased" : "Get Tickets"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

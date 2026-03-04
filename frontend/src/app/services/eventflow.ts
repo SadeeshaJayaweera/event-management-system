@@ -399,3 +399,77 @@ export const paymentApi = {
     }>("/api/payment/initiate", { method: "POST", body: payload }),
 };
 
+// ---- Review Types ----
+
+export type ReviewStatus = "PENDING" | "APPROVED" | "FLAGGED" | "REMOVED";
+
+export interface ReviewItem {
+  id: string;
+  eventId: string;
+  userId: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+  pros?: string;
+  cons?: string;
+  verified: boolean;
+  helpfulCount: number;
+  status: ReviewStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RatingStats {
+  eventId: string;
+  averageRating: number;
+  totalReviews: number;
+  distribution: Record<number, number>;
+}
+
+// ---- Review API ----
+
+export const reviewApi = {
+  create: (payload: {
+    eventId: string;
+    userId: string;
+    rating: number;
+    title?: string;
+    comment?: string;
+    pros?: string;
+    cons?: string;
+  }) => apiRequest<ReviewItem>("/api/reviews", { method: "POST", body: payload }),
+
+  getById: (id: string) => apiRequest<ReviewItem>(`/api/reviews/${id}`),
+
+  update: (id: string, userId: string, payload: {
+    rating?: number;
+    title?: string;
+    comment?: string;
+    pros?: string;
+    cons?: string;
+  }) => apiRequest<ReviewItem>(`/api/reviews/${id}?userId=${userId}`, { method: "PUT", body: payload }),
+
+  delete: (id: string, userId: string) =>
+    apiRequest<void>(`/api/reviews/${id}?userId=${userId}`, { method: "DELETE" }),
+
+  getByEvent: (eventId: string) =>
+    apiRequest<ReviewItem[]>(`/api/reviews/event/${eventId}`),
+
+  getByUser: (userId: string) =>
+    apiRequest<ReviewItem[]>(`/api/reviews/user/${userId}`),
+
+  getAverageRating: (eventId: string) =>
+    apiRequest<{ eventId: string; averageRating: number }>(`/api/reviews/event/${eventId}/rating`),
+
+  getRatingStats: (eventId: string) =>
+    apiRequest<RatingStats>(`/api/reviews/event/${eventId}/stats`),
+
+  canReview: (eventId: string, userId: string) =>
+    apiRequest<{ eventId: string; userId: string; canReview: boolean }>(
+      `/api/reviews/can-review/${eventId}?userId=${userId}`
+    ),
+
+  markHelpful: (id: string) =>
+    apiRequest<ReviewItem>(`/api/reviews/${id}/helpful`, { method: "POST" }),
+};
+

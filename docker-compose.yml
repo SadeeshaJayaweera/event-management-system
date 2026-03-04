@@ -141,6 +141,19 @@ services:
     networks:
       - event-network
 
+  review-service:
+    build: ./backend/review-service
+    ports:
+      - "8089:8089"
+    depends_on:
+      - discovery
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery:8761/eureka/
+    volumes:
+      - review-data:/data
+    networks:
+      - event-network
+
   frontend:
     build: ./frontend
     ports:
@@ -156,3 +169,4 @@ networks:
 
 volumes:
   profile-data:
+  review-data:

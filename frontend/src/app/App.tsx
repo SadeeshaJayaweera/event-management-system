@@ -27,6 +27,7 @@ import { AttendeeLayout } from './layouts/AttendeeLayout';
 import { AttendeeDashboard } from './pages/AttendeeDashboard';
 import { DiscoverEvents } from './pages/DiscoverEvents';
 import { MyTickets } from './pages/MyTickets';
+import { AttendeeEventDetail } from './pages/AttendeeEventDetail';
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
             >
               <Route index element={<AttendeeDashboard />} />
               <Route path="discover" element={<DiscoverEvents />} />
+              <Route path="events/:id" element={<AttendeeEventDetail />} />
               <Route path="tickets" element={<MyTickets />} />
               <Route path="checkout/:eventId" element={<Checkout />} />
               <Route path="profile" element={<ProfilePage />} />

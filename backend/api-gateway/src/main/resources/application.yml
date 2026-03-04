@@ -116,6 +116,16 @@ spring:
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
 
+        - id: review-service
+          uri: lb://review-service
+          predicates:
+            - Path=/api/reviews,/api/reviews/**
+          filters:
+            - RewritePath=/api/reviews(?<segment>/?.*), /api/reviews$\{segment}
+            - AddResponseHeader=X-Content-Type-Options,nosniff
+            - AddResponseHeader=X-Frame-Options,DENY
+            - AddResponseHeader=X-XSS-Protection,1;mode=block
+
         - id: payment-service
           uri: lb://payment-service
           predicates:
@@ -183,6 +193,13 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/payment-service, /v3/api-docs
 
+        - id: review-service-openapi
+          uri: lb://review-service
+          predicates:
+            - Path=/v3/api-docs/review-service
+          filters:
+            - RewritePath=/v3/api-docs/review-service, /v3/api-docs
+
 eureka:
   client:
     serviceUrl:
@@ -226,3 +243,5 @@ springdoc:
         url: /v3/api-docs/analytics-service
       - name: payment-service
         url: /v3/api-docs/payment-service
+      - name: review-service
+        url: /v3/api-docs/review-service
