@@ -1,5 +1,5 @@
 server:
-  port: 8088
+  port: 8083
 
 spring:
   application:
@@ -36,3 +36,10 @@ payhere:
 
 ticket-service:
   url: "http://ticket-service:8084"
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

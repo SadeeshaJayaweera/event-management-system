@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { paymentApi, ticketApi, eventApi, type EventItem } from "../services/eventflow";
-import { Loader2, ArrowLeft, CreditCard, CheckCircle, Minus, Plus, Ticket } from "lucide-react";
+import { Loader2, ArrowLeft, CreditCard, CheckCircle, Minus, Plus, Ticket, MapPin, Calendar, Clock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -28,12 +28,8 @@ export function Checkout() {
                 const foundEvent = events.find(e => e.id === eventId);
                 if (foundEvent) {
                     setEvent(foundEvent);
-                    
-                    // Fetch sold tickets for this event
                     const tickets = await ticketApi.list({ eventId });
                     setSoldTickets(tickets.length);
-                    
-                    // Fetch user's existing tickets for this event
                     const userEventTickets = tickets.filter(t => t.userId === user.id);
                     setUserTickets(userEventTickets.length);
                 } else {
@@ -48,14 +44,19 @@ export function Checkout() {
                 setFetchLoading(false);
             }
         };
-
         loadEvent();
     }, [eventId, navigate, user]);
 
     if (fetchLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            <div style={styles.loadingScreen}>
+                <div style={styles.loadingContent}>
+                    <div style={styles.loadingSpinner}>
+                        <Loader2 style={{ width: 28, height: 28, color: '#6366f1', animation: 'spin 1s linear infinite' }} />
+                    </div>
+                    <p style={styles.loadingText}>Loading event details…</p>
+                </div>
+                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             </div>
         );
     }
@@ -72,246 +73,545 @@ export function Checkout() {
     };
 
     const handlePayment = async () => {
-        if (!user) {
-            toast.error("Please log in to continue");
-            return;
-        }
-
-        if (quantity > userCanPurchase) {
-            toast.error(`You can only purchase ${userCanPurchase} more ticket(s)`);
-            return;
-        }
+        if (!user) { toast.error("Please log in to continue"); return; }
+        if (quantity > userCanPurchase) { toast.error(`You can only purchase ${userCanPurchase} more ticket(s)`); return; }
 
         setLoading(true);
         try {
             const orderId = `ORDER-${Date.now()}`;
-            const amount = totalPrice;
-            const currency = "LKR";
-
-            // 1. Call payment service to log the payment attempt (for university project tracking)
-            await paymentApi.initiate({
-                orderId,
-                amount,
-                currency
-            });
-
-            // 2. Simulate payment processing delay
+            await paymentApi.initiate({ orderId, amount: totalPrice, currency: "LKR" });
             await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // 3. Create the tickets
-            const purchasedTickets = await ticketApi.purchase({ 
-                eventId: event.id, 
-                userId: user.id, 
-                price: event.price,
-                quantity: quantity
+            const purchasedTickets = await ticketApi.purchase({
+                eventId: event.id, userId: user.id, price: event.price, quantity
             });
-
             console.log(`Successfully created ${purchasedTickets.length} ticket(s):`, purchasedTickets);
-
-            // 4. Show success state
             setShowConfirmation(true);
-            const ticketText = quantity === 1 ? "ticket" : "tickets";
-            const message = quantity === 1 
-                ? `Payment successful! Your ticket has been created.` 
-                : `Payment successful! ${quantity} tickets have been created.`;
-            toast.success(message);
-
-            // 5. Redirect after a moment
-            setTimeout(() => {
-                navigate('/attendee/tickets');
-            }, 2500);
-
+            toast.success(quantity === 1 ? `Payment successful! Your ticket has been created.` : `Payment successful! ${quantity} tickets have been created.`);
+            setTimeout(() => navigate('/attendee/tickets'), 2500);
         } catch (error: any) {
             console.error(error);
-            const errorMessage = error?.message || "Failed to process payment";
-            toast.error(errorMessage);
+            toast.error(error?.message || "Failed to process payment");
             setLoading(false);
         }
     };
 
     if (showConfirmation) {
-        const ticketText = quantity === 1 ? "ticket" : "tickets";
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-                <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                    <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100 text-center">
-                        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                            <CheckCircle className="h-10 w-10 text-green-600" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Payment Successful!</h3>
-                        <p className="text-sm text-gray-600 mb-2">You've purchased <span className="font-bold text-indigo-600">{quantity} {ticketText}</span> for {event.title}</p>
-                        <p className="text-xs text-gray-500 mb-4">Each ticket will have a unique QR code for event entry</p>
-                        <p className="text-xs text-gray-400">Redirecting to your tickets...</p>
+            <div style={styles.pageWrapper}>
+                <style>{globalStyles}</style>
+                <div style={styles.confirmationCard}>
+                    <div style={styles.confirmIconRing}>
+                        <CheckCircle style={{ width: 40, height: 40, color: '#10b981' }} />
                     </div>
+                    <h3 style={styles.confirmTitle}>You're going! 🎉</h3>
+                    <p style={styles.confirmBody}>
+                        <span style={styles.confirmHighlight}>{quantity} {quantity === 1 ? 'ticket' : 'tickets'}</span> secured for
+                    </p>
+                    <p style={styles.confirmEventName}>{event.title}</p>
+                    <p style={styles.confirmSub}>Each ticket includes a unique QR code for entry</p>
+                    <div style={styles.redirectPill}>Redirecting to your tickets…</div>
                 </div>
             </div>
         );
     }
 
+    const seatPct = Math.round((remainingTickets / event.maxTickets) * 100);
+
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-                    Checkout
-                </h2>
-                <p className="mt-2 text-center text-sm text-gray-600">
-                    Complete your ticket purchase
-                </p>
-            </div>
+        <div style={styles.pageWrapper}>
+            <style>{globalStyles}</style>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
-                    <div className="space-y-6">
-                        {/* Event Image */}
-                        {event.imageUrl && (
-                            <div className="w-full h-40 rounded-lg overflow-hidden">
-                                <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+            <div style={styles.outerGrid}>
+                {/* ── LEFT PANEL: Event Hero ── */}
+                <div style={styles.heroPanel}>
+                    {event.imageUrl && (
+                        <div style={styles.heroImageWrap}>
+                            <img src={event.imageUrl} alt={event.title} style={styles.heroImage} />
+                            <div style={styles.heroOverlay} />
+                        </div>
+                    )}
+                    <div style={styles.heroContent}>
+                        <span style={styles.categoryBadge}>{event.category}</span>
+                        <h1 style={styles.heroTitle}>{event.title}</h1>
+
+                        <div style={styles.metaList}>
+                            <div style={styles.metaRow}>
+                                <Calendar style={styles.metaIcon} />
+                                <span style={styles.metaText}>{event.date}</span>
                             </div>
-                        )}
-
-                        <div>
-                            <h3 className="text-lg font-medium leading-6 text-gray-900">Event Details</h3>
-                            <div className="mt-4 space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Event:</span>
-                                    <span className="font-medium text-gray-900 text-right">{event.title}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Category:</span>
-                                    <span className="font-medium text-gray-900">{event.category}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Date:</span>
-                                    <span className="font-medium text-gray-900">{event.date}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Time:</span>
-                                    <span className="font-medium text-gray-900">{event.time}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Location:</span>
-                                    <span className="font-medium text-gray-900 text-right">{event.location}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Remaining Seats:</span>
-                                    <span className={`font-medium ${remainingTickets < 10 ? 'text-red-600' : 'text-green-600'}`}>
-                                        {remainingTickets} / {event.maxTickets}
-                                    </span>
-                                </div>
+                            <div style={styles.metaRow}>
+                                <Clock style={styles.metaIcon} />
+                                <span style={styles.metaText}>{event.time}</span>
+                            </div>
+                            <div style={styles.metaRow}>
+                                <MapPin style={styles.metaIcon} />
+                                <span style={styles.metaText}>{event.location}</span>
                             </div>
                         </div>
 
-                        {userTickets > 0 && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                <div className="flex items-start">
-                                    <Ticket className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
-                                    <div className="text-sm text-amber-800">
-                                        <p className="font-medium mb-1">You already have {userTickets} {userTickets === 1 ? 'ticket' : 'tickets'} for this event</p>
-                                        <p className="text-xs text-amber-600">You can purchase up to {userCanPurchase} more {userCanPurchase === 1 ? 'ticket' : 'tickets'} (max 3 per event)</p>
-                                    </div>
+                        {/* Seat availability bar */}
+                        <div style={styles.seatSection}>
+                            <div style={styles.seatHeader}>
+                                <div style={styles.seatLabel}>
+                                    <Users style={{ width: 14, height: 14 }} />
+                                    <span>Seats available</span>
                                 </div>
+                                <span style={{ ...styles.seatCount, color: remainingTickets < 10 ? '#f87171' : '#34d399' }}>
+                                    {remainingTickets} / {event.maxTickets}
+                                </span>
                             </div>
-                        )}
-
-                        <div>
-                            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-3">Quantity</h3>
-                            <p className="text-xs text-gray-500 mb-3">Each ticket will have a unique QR code</p>
-                            <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <button
-                                    onClick={() => handleQuantityChange(quantity - 1)}
-                                    disabled={quantity <= 1}
-                                    className="w-10 h-10 rounded-lg bg-white border border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <Minus className="w-4 h-4" />
-                                </button>
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-gray-900">{quantity}</div>
-                                    <div className="text-xs text-gray-500">
-                                        {quantity === 1 ? 'ticket' : 'tickets'}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handleQuantityChange(quantity + 1)}
-                                    disabled={quantity >= userCanPurchase}
-                                    className="w-10 h-10 rounded-lg bg-white border border-gray-300 flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                </button>
+                            <div style={styles.progressTrack}>
+                                <div style={{
+                                    ...styles.progressFill,
+                                    width: `${seatPct}%`,
+                                    background: remainingTickets < 10 ? '#f87171' : '#34d399'
+                                }} />
                             </div>
-                            {userCanPurchase === 0 && (
-                                <p className="text-xs text-red-600 mt-2 text-center">
-                                    {userTickets >= 3 ? "You've reached the maximum of 3 tickets for this event" : "No tickets available"}
-                                </p>
-                            )}
-                            {quantity > 1 && (
-                                <p className="text-xs text-indigo-600 mt-2 text-center font-medium">
-                                    You'll receive {quantity} separate tickets with individual QR codes
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-3">Payment Summary</h3>
-                            <div className="space-y-2 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Price per ticket:</span>
-                                    <span className="text-gray-900">LKR {event.price.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Quantity:</span>
-                                    <span className="text-gray-900">× {quantity}</span>
-                                </div>
-                                <div className="border-t border-gray-300 pt-2 mt-2">
-                                    <div className="flex justify-between text-base">
-                                        <span className="font-medium text-gray-900">Total Amount:</span>
-                                        <span className="font-bold text-indigo-600">LKR {totalPrice.toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div className="flex items-start">
-                                <CreditCard className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
-                                <div className="text-sm text-blue-800">
-                                    <p className="font-medium mb-1">Mock Payment</p>
-                                    <p className="text-xs text-blue-600">This is a simulated payment. No actual transaction will occur.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="border-t border-gray-200 pt-6">
-                            <button
-                                onClick={handlePayment}
-                                disabled={loading || userCanPurchase === 0}
-                                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                                        Processing Payment...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CreditCard className="-ml-1 mr-2 h-4 w-4" />
-                                        Pay LKR {totalPrice.toLocaleString()}
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        <div className="text-center">
-                            <button
-                                onClick={() => navigate(-1)}
-                                disabled={loading}
-                                className="text-sm text-gray-500 hover:text-gray-900 flex items-center justify-center w-full disabled:opacity-50 transition-colors"
-                            >
-                                <ArrowLeft className="w-4 h-4 mr-1" /> Cancel
-                            </button>
                         </div>
                     </div>
+                </div>
+
+                {/* ── RIGHT PANEL: Checkout Form ── */}
+                <div style={styles.formPanel}>
+                    <div style={styles.formHeader}>
+                        <h2 style={styles.formTitle}>Checkout</h2>
+                        <p style={styles.formSubtitle}>Complete your ticket purchase</p>
+                    </div>
+
+                    {/* Existing tickets notice */}
+                    {userTickets > 0 && (
+                        <div style={styles.noticeBox}>
+                            <Ticket style={{ width: 16, height: 16, color: '#d97706', flexShrink: 0 }} />
+                            <div>
+                                <p style={styles.noticeTitle}>You already have {userTickets} {userTickets === 1 ? 'ticket' : 'tickets'}</p>
+                                <p style={styles.noticeSub}>Up to {userCanPurchase} more available (max 3 per event)</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quantity selector */}
+                    <div style={styles.section}>
+                        <div style={styles.sectionHeader}>
+                            <h3 style={styles.sectionTitle}>Quantity</h3>
+                            <span style={styles.sectionHint}>Max 3 per person</span>
+                        </div>
+                        <div style={styles.qtyRow}>
+                            <button
+                                style={{ ...styles.qtyBtn, opacity: quantity <= 1 ? 0.4 : 1 }}
+                                onClick={() => handleQuantityChange(quantity - 1)}
+                                disabled={quantity <= 1}
+                            >
+                                <Minus style={{ width: 16, height: 16 }} />
+                            </button>
+                            <div style={styles.qtyDisplay}>
+                                <span style={styles.qtyNumber}>{quantity}</span>
+                                <span style={styles.qtyLabel}>{quantity === 1 ? 'ticket' : 'tickets'}</span>
+                            </div>
+                            <button
+                                style={{ ...styles.qtyBtn, opacity: quantity >= userCanPurchase ? 0.4 : 1 }}
+                                onClick={() => handleQuantityChange(quantity + 1)}
+                                disabled={quantity >= userCanPurchase}
+                            >
+                                <Plus style={{ width: 16, height: 16 }} />
+                            </button>
+                        </div>
+                        {userCanPurchase === 0 && (
+                            <p style={styles.errorNote}>
+                                {userTickets >= 3 ? "Maximum of 3 tickets reached for this event" : "No tickets available"}
+                            </p>
+                        )}
+                        {quantity > 1 && (
+                            <p style={styles.qtyNote}>You'll receive {quantity} tickets with individual QR codes</p>
+                        )}
+                    </div>
+
+                    {/* Price summary */}
+                    <div style={styles.section}>
+                        <h3 style={styles.sectionTitle}>Summary</h3>
+                        <div style={styles.summaryBox}>
+                            <div style={styles.summaryRow}>
+                                <span style={styles.summaryLabel}>Price per ticket</span>
+                                <span style={styles.summaryValue}>LKR {event.price.toLocaleString()}</span>
+                            </div>
+                            <div style={styles.summaryRow}>
+                                <span style={styles.summaryLabel}>Quantity</span>
+                                <span style={styles.summaryValue}>× {quantity}</span>
+                            </div>
+                            <div style={styles.summaryDivider} />
+                            <div style={styles.summaryRow}>
+                                <span style={styles.totalLabel}>Total</span>
+                                <span style={styles.totalValue}>LKR {totalPrice.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mock payment notice */}
+                    <div style={styles.mockNotice}>
+                        <CreditCard style={{ width: 15, height: 15, color: '#6366f1', flexShrink: 0 }} />
+                        <span style={styles.mockText}>Simulated payment — no real transaction occurs</span>
+                    </div>
+
+                    {/* CTA */}
+                    <button
+                        style={{
+                            ...styles.payBtn,
+                            opacity: loading || userCanPurchase === 0 ? 0.6 : 1,
+                            cursor: loading || userCanPurchase === 0 ? 'not-allowed' : 'pointer',
+                        }}
+                        onClick={handlePayment}
+                        disabled={loading || userCanPurchase === 0}
+                        className="pay-btn-hover"
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />
+                                Processing…
+                            </>
+                        ) : (
+                            <>
+                                <CreditCard style={{ width: 18, height: 18 }} />
+                                Pay LKR {totalPrice.toLocaleString()}
+                            </>
+                        )}
+                    </button>
+
+                    <button
+                        style={styles.cancelBtn}
+                        onClick={() => navigate(-1)}
+                        disabled={loading}
+                        className="cancel-btn-hover"
+                    >
+                        <ArrowLeft style={{ width: 14, height: 14 }} />
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
     );
 }
+
+/* ─────────────────────────────────────────
+   Styles
+───────────────────────────────────────── */
+
+const styles: Record<string, React.CSSProperties> = {
+    pageWrapper: {
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f0f1ff 0%, #fafafa 50%, #f0fdf4 100%)',
+        padding: 'clamp(12px, 2vw, 20px)',
+        fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+        position: 'relative',
+    },
+    backBtn: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        background: 'white',
+        border: '1px solid #e5e7eb',
+        borderRadius: 10,
+        padding: '8px 14px',
+        fontSize: 13,
+        fontWeight: 500,
+        color: '#374151',
+        cursor: 'pointer',
+        marginBottom: 12,
+        boxShadow: '0 1px 3px rgba(0,0,0,.06)',
+        transition: 'all .15s',
+    },
+    outerGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
+        gap: 'clamp(12px, 2vw, 20px)',
+        maxWidth: 960,
+        margin: '0 auto',
+        alignItems: 'start',
+    },
+
+    /* Hero panel */
+    heroPanel: {
+        borderRadius: 20,
+        overflow: 'hidden',
+        background: 'white',
+        boxShadow: '0 4px 24px rgba(99,102,241,.08)',
+        border: '1px solid #e0e7ff',
+    },
+    heroImageWrap: {
+        position: 'relative',
+        height: 'clamp(180px, 28vw, 260px)',
+        overflow: 'hidden',
+    },
+    heroImage: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        display: 'block',
+    },
+    heroOverlay: {
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(to bottom, transparent 40%, rgba(15,15,35,.5))',
+    },
+    heroContent: {
+        padding: 'clamp(16px, 3vw, 24px)',
+    },
+    categoryBadge: {
+        display: 'inline-block',
+        background: '#ede9fe',
+        color: '#6d28d9',
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: '.07em',
+        textTransform: 'uppercase' as const,
+        padding: '4px 10px',
+        borderRadius: 99,
+        marginBottom: 10,
+    },
+    heroTitle: {
+        fontSize: 'clamp(18px, 3vw, 24px)',
+        fontWeight: 700,
+        color: '#111827',
+        margin: '0 0 18px',
+        lineHeight: 1.3,
+    },
+    metaList: {
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: 10,
+        marginBottom: 22,
+    },
+    metaRow: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
+        color: '#6b7280',
+    },
+    metaIcon: { width: 15, height: 15, color: '#6366f1', flexShrink: 0 } as React.CSSProperties,
+    metaText: { fontSize: 14, color: '#374151' },
+    seatSection: { marginTop: 4 },
+    seatHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    seatLabel: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 5,
+        fontSize: 12,
+        color: '#6b7280',
+        fontWeight: 500,
+    },
+    seatCount: { fontSize: 12, fontWeight: 700 },
+    progressTrack: {
+        height: 6,
+        background: '#f3f4f6',
+        borderRadius: 99,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: '100%',
+        borderRadius: 99,
+        transition: 'width .4s ease',
+    },
+
+    /* Form panel */
+    formPanel: {
+        background: 'white',
+        borderRadius: 20,
+        padding: 'clamp(16px, 3vw, 24px)',
+        boxShadow: '0 4px 24px rgba(99,102,241,.08)',
+        border: '1px solid #e0e7ff',
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: 18,
+    },
+    formHeader: { borderBottom: '1px solid #f3f4f6', paddingBottom: 12 },
+    formTitle: {
+        fontSize: 'clamp(20px, 3.5vw, 26px)',
+        fontWeight: 800,
+        color: '#111827',
+        margin: '0 0 4px',
+        letterSpacing: '-.02em',
+    },
+    formSubtitle: { fontSize: 13, color: '#9ca3af', margin: 0 },
+
+    /* Notice */
+    noticeBox: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 10,
+        background: '#fffbeb',
+        border: '1px solid #fde68a',
+        borderRadius: 12,
+        padding: '12px 14px',
+    },
+    noticeTitle: { fontSize: 13, fontWeight: 600, color: '#92400e', margin: '0 0 2px' },
+    noticeSub: { fontSize: 11, color: '#b45309', margin: 0 },
+
+    /* Section */
+    section: {},
+    sectionHeader: {
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    sectionTitle: { fontSize: 14, fontWeight: 700, color: '#111827', margin: 0 },
+    sectionHint: { fontSize: 11, color: '#9ca3af' },
+
+    /* Quantity */
+    qtyRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 20,
+        background: '#f9fafb',
+        border: '1px solid #e5e7eb',
+        borderRadius: 14,
+        padding: '16px 20px',
+    },
+    qtyBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        border: '1.5px solid #d1d5db',
+        background: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        color: '#374151',
+        transition: 'all .15s',
+        flexShrink: 0,
+    },
+    qtyDisplay: { textAlign: 'center' as const, minWidth: 56 },
+    qtyNumber: { display: 'block', fontSize: 28, fontWeight: 800, color: '#111827', lineHeight: 1 },
+    qtyLabel: { display: 'block', fontSize: 11, color: '#9ca3af', marginTop: 2 },
+    qtyNote: { fontSize: 11, color: '#6366f1', textAlign: 'center' as const, marginTop: 8, fontWeight: 500 },
+    errorNote: { fontSize: 11, color: '#ef4444', textAlign: 'center' as const, marginTop: 8 },
+
+    /* Summary */
+    summaryBox: {
+        background: '#f9fafb',
+        border: '1px solid #e5e7eb',
+        borderRadius: 12,
+        padding: 16,
+        display: 'flex',
+        flexDirection: 'column' as const,
+        gap: 10,
+    },
+    summaryRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    summaryLabel: { fontSize: 13, color: '#6b7280' },
+    summaryValue: { fontSize: 13, color: '#374151', fontWeight: 500 },
+    summaryDivider: { borderTop: '1px solid #e5e7eb', margin: '2px 0' },
+    totalLabel: { fontSize: 15, fontWeight: 700, color: '#111827' },
+    totalValue: { fontSize: 17, fontWeight: 800, color: '#6366f1' },
+
+    /* Mock notice */
+    mockNotice: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        background: '#eef2ff',
+        border: '1px solid #c7d2fe',
+        borderRadius: 10,
+        padding: '10px 14px',
+    },
+    mockText: { fontSize: 12, color: '#4f46e5' },
+
+    /* Buttons */
+    payBtn: {
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+        color: 'white',
+        border: 'none',
+        borderRadius: 13,
+        padding: '15px 20px',
+        fontSize: 15,
+        fontWeight: 700,
+        letterSpacing: '-.01em',
+        cursor: 'pointer',
+        boxShadow: '0 4px 14px rgba(99,102,241,.35)',
+        transition: 'all .2s',
+    },
+    cancelBtn: {
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 5,
+        background: 'transparent',
+        border: 'none',
+        color: '#9ca3af',
+        fontSize: 13,
+        cursor: 'pointer',
+        padding: '8px',
+        borderRadius: 8,
+        transition: 'color .15s',
+    },
+
+    /* Loading */
+    loadingScreen: {
+        minHeight: '100vh',
+        background: '#f9fafb',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loadingContent: { textAlign: 'center' as const },
+    loadingSpinner: { marginBottom: 12 },
+    loadingText: { fontSize: 13, color: '#9ca3af' },
+
+    /* Confirmation */
+    confirmationCard: {
+        maxWidth: 420,
+        margin: '40px auto 0',
+        background: 'white',
+        borderRadius: 24,
+        padding: 'clamp(20px, 4vw, 32px)',
+        textAlign: 'center' as const,
+        boxShadow: '0 8px 40px rgba(16,185,129,.12)',
+        border: '1px solid #d1fae5',
+    },
+    confirmIconRing: {
+        width: 72,
+        height: 72,
+        borderRadius: '50%',
+        background: '#d1fae5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto 20px',
+    },
+    confirmTitle: { fontSize: 24, fontWeight: 800, color: '#111827', margin: '0 0 10px' },
+    confirmBody: { fontSize: 14, color: '#6b7280', margin: '0 0 4px' },
+    confirmHighlight: { fontWeight: 700, color: '#6366f1' },
+    confirmEventName: { fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 8px' },
+    confirmSub: { fontSize: 12, color: '#9ca3af', margin: '0 0 20px' },
+    redirectPill: {
+        display: 'inline-block',
+        background: '#f3f4f6',
+        color: '#9ca3af',
+        fontSize: 12,
+        borderRadius: 99,
+        padding: '6px 14px',
+    },
+};
+
+const globalStyles = `
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap');
+    * { box-sizing: border-box; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .pay-btn-hover:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.45) !important; }
+    .cancel-btn-hover:hover:not(:disabled) { color: #374151 !important; }
+
+    /* Stack panels vertically on small screens */
+    @media (max-width: 640px) {
+        .back-btn { margin-bottom: 16px; }
+    }
+`;
