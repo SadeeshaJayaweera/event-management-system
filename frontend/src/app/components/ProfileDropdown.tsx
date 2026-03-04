@@ -88,7 +88,11 @@ export function ProfileDropdown() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                {user?.email ? (
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                )}
               </div>
             </div>
           </div>

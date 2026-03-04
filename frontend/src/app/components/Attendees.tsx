@@ -1,12 +1,19 @@
 
-import { Search, Mail, Calendar, CheckCircle, Clock, XCircle, MoreHorizontal, Download, DollarSign } from "lucide-react";
+import { Search, Calendar, CheckCircle, Clock, XCircle, MoreHorizontal, Download, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { ticketApi, eventApi, type TicketItem, type EventItem } from "../services/eventflow";
+import { ticketApi, eventApi, userApi, profileApi, type TicketItem, type EventItem } from "../services/eventflow";
 import { useAuth } from "../contexts/AuthContext";
 
 interface TicketWithEvent extends TicketItem {
   eventTitle?: string;
+}
+
+interface UserInfo {
+  name: string;
+  email: string;
+  role: string;
+  avatarUrl?: string;
 }
 
 export function Attendees() {
@@ -14,6 +21,7 @@ export function Attendees() {
   const [tickets, setTickets] = useState<TicketWithEvent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [userInfoMap, setUserInfoMap] = useState<Record<string, UserInfo>>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -40,6 +48,29 @@ export function Attendees() {
         }));
 
         setTickets(enrichedTickets);
+
+        // Fetch user info for all unique userIds
+        const uniqueUserIds = [...new Set(filteredTickets.map(t => t.userId))];
+        const userInfoEntries = await Promise.all(
+          uniqueUserIds.map(async (uid) => {
+            try {
+              const [authUser, profileData] = await Promise.allSettled([
+                userApi.getUser(uid),
+                profileApi.getProfile(uid),
+              ]);
+              const info: UserInfo = {
+                name: authUser.status === 'fulfilled' ? authUser.value.name : `User ${uid.slice(0, 8)}`,
+                email: authUser.status === 'fulfilled' ? authUser.value.email : '',
+                role: authUser.status === 'fulfilled' ? authUser.value.role : '',
+                avatarUrl: profileData.status === 'fulfilled' ? profileData.value.avatarUrl : undefined,
+              };
+              return [uid, info] as const;
+            } catch {
+              return [uid, { name: `User ${uid.slice(0, 8)}`, email: '', role: '' }] as const;
+            }
+          })
+        );
+        setUserInfoMap(Object.fromEntries(userInfoEntries));
       } catch (error) {
         console.error("Failed to load tickets:", error);
         toast.error("Failed to load tickets");
@@ -51,11 +82,16 @@ export function Attendees() {
     loadData();
   }, [user?.id, user?.role]);
 
-  const filteredTickets = tickets.filter(ticket => 
-    ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (ticket.eventTitle && ticket.eventTitle.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredTickets = tickets.filter(ticket => {
+    const info = userInfoMap[ticket.userId];
+    return (
+      ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.eventTitle && ticket.eventTitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (info?.name && info.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (info?.email && info.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -99,7 +135,7 @@ export function Attendees() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Search by ticket ID, user ID, or event..." 
+              placeholder="Search by ticket ID, user name, email, or event..." 
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -125,40 +161,35 @@ export function Attendees() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredTickets.map((ticket) => (
-                    <tr key={ticket.id} className="hover:bg-gray-50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
-                            #{ticket.id.slice(0, 4)}
+                  {filteredTickets.map((ticket) => {
+                    const info = userInfoMap[ticket.userId];
+                    return (
+                      <tr key={ticket.id} className="hover:bg-gray-50 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-gray-900 font-mono text-xs">{ticket.id.slice(0, 8)}...</div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">{ticket.eventTitle}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center text-gray-900 font-medium">
+                            <DollarSign className="w-3 h-3 mr-0.5" />
+                            {ticket.price}
                           </div>
-                          <div>
-                            <div className="font-medium text-gray-900 font-mono text-xs">{ticket.id.slice(0, 8)}...</div>
-                            <div className="text-gray-500 text-xs">User: {ticket.userId.slice(0, 8)}...</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(ticket.status)}`}>
+                            {getStatusIcon(ticket.status)}
+                            {ticket.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-500">
+                          <div className="flex items-center">
+                            <Calendar className="w-3 h-3 mr-1.5" />
+                            {new Date(ticket.purchasedAt).toLocaleDateString()}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">{ticket.eventTitle}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center text-gray-900 font-medium">
-                          <DollarSign className="w-3 h-3 mr-0.5" />
-                          {ticket.price}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(ticket.status)}`}>
-                          {getStatusIcon(ticket.status)}
-                          {ticket.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-500">
-                        <div className="flex items-center">
-                          <Calendar className="w-3 h-3 mr-1.5" />
-                          {new Date(ticket.purchasedAt).toLocaleDateString()}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
