@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Camera, Save, X } from 'lucide-react';
+import { User, Camera, Save, X, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { profileApi, type UserProfile, type ProfileUpdateRequest } from '../services/eventflow';
@@ -173,6 +173,18 @@ export function ProfileSettings() {
               Cancel upload
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Account Email (read-only, from auth service) */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+          <Mail className="w-4 h-4 text-gray-400" />
+          Email Address
+        </label>
+        <div className="flex items-center px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700">
+          {user?.email || 'Not available'}
+          <span className="ml-auto text-xs text-gray-400">Managed by account</span>
         </div>
       </div>
 

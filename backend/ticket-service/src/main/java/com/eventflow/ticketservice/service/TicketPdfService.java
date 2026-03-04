@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
@@ -68,10 +71,18 @@ public class TicketPdfService {
     String eventLocation = getValue(event, "location", "");
     String eventCategory = getValue(event, "category", "");
 
+    // Convert purchasedAt (stored as UTC) to IST (Asia/Kolkata, UTC+05:30)
+    ZoneId ist = ZoneId.of("Asia/Kolkata");
+    ZonedDateTime purchasedIst = ticket.getPurchasedAt()
+        .atZone(ZoneId.of("UTC"))
+        .withZoneSameInstant(ist);
+    String purchasedIstStr = purchasedIst.format(
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+
     // QR code encodes all key identifiers so scanners can verify the ticket
     String qrContent = String.format(
-        "TICKET:%s|EVENT:%s|USER:%s|STATUS:%s",
-        ticket.getId(), ticket.getEventId(), ticket.getUserId(), ticket.getStatus()
+        "TICKET:%s|EVENT:%s|USER:%s|STATUS:%s|PURCHASED_IST:%s",
+        ticket.getId(), ticket.getEventId(), ticket.getUserId(), ticket.getStatus(), purchasedIstStr
     );
 
     try (PDDocument document = new PDDocument()) {
@@ -82,7 +93,8 @@ public class TicketPdfService {
       float H = PDRectangle.A4.getHeight();  // 842 pt
 
       // Generate QR code BufferedImage and convert to PDImageXObject
-      BufferedImage qrImage = generateQrImage(qrContent, 220);
+      // Use a high resolution (600px) so the QR remains crisp and scannable in the PDF
+      BufferedImage qrImage = generateQrImage(qrContent, 600);
       PDImageXObject qrPdf  = LosslessFactory.createFromImage(document, qrImage);
 
       // --- Fonts ---
@@ -208,9 +220,8 @@ public class TicketPdfService {
         cs.showText("PURCHASED ON");
         cs.endText();
 
-        String purchasedDate = ticket.getPurchasedAt().toLocalDate().toString();
-        String purchasedTime = ticket.getPurchasedAt().toLocalTime().toString();
-        if (purchasedTime.length() > 5) purchasedTime = purchasedTime.substring(0, 5);
+        String purchasedDate = purchasedIst.toLocalDate().toString();
+        String purchasedTime = purchasedIst.format(DateTimeFormatter.ofPattern("HH:mm")) + " IST";
 
         setFill(cs, COLOR_TEXT_DARK);
         cs.beginText();

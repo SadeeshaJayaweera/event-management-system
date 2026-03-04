@@ -61,6 +61,11 @@ export const authApi = {
     apiRequest<AuthResponse>("/api/auth/login", { method: "POST", body: payload }),
 };
 
+export const userApi = {
+  getUser: (id: string) => apiRequest<UserResponse>(`/api/users/${id}`),
+  getAllUsers: () => apiRequest<UserResponse[]>("/api/users"),
+};
+
 export const eventApi = {
   list: (organizerId?: string) => {
     const queryParams = new URLSearchParams();

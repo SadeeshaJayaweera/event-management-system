@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
-import { authApi, type AuthResponse, type UserRole } from '../services/eventflow';
+import { authApi, userApi, type AuthResponse, type UserRole } from '../services/eventflow';
 import { setAuthToken } from '../services/client';
 
 interface User {
   id: string;
   name: string;
+  email?: string;
   role: UserRole;
 }
 
@@ -36,19 +37,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load auth from localStorage on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const { user, token }: StoredAuth = JSON.parse(stored);
-        setUser(user);
-        setToken(token);
+    const loadStoredAuth = async () => {
+      try {
+        const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (stored) {
+          const { user: storedUser, token: storedToken }: StoredAuth = JSON.parse(stored);
+          // Set token first so API calls are authenticated
+          setAuthToken(storedToken);
+          // If email is not already cached, fetch it from auth service
+          if (!storedUser.email) {
+            try {
+              const userInfo = await userApi.getUser(storedUser.id);
+              storedUser.email = userInfo.email;
+            } catch (err) {
+              console.warn('Could not fetch user email on session restore:', err);
+            }
+          }
+          setUser(storedUser);
+          setToken(storedToken);
+        }
+      } catch (error) {
+        console.error('Failed to load auth from storage:', error);
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load auth from storage:', error);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+    loadStoredAuth();
   }, []);
 
   // Save auth to localStorage whenever it changes
@@ -63,10 +78,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, token]);
 
-  const handleAuthResponse = (response: AuthResponse) => {
+  const handleAuthResponse = async (response: AuthResponse) => {
+    // Set the token immediately so subsequent API calls are authenticated
+    setAuthToken(response.token);
+
+    let email: string | undefined;
+    try {
+      const userInfo = await userApi.getUser(response.userId);
+      email = userInfo.email;
+    } catch (err) {
+      console.warn('Could not fetch user email from auth service:', err);
+    }
+
     const userData: User = {
       id: response.userId,
       name: response.name,
+      email,
       role: response.role,
     };
     setUser(userData);
@@ -76,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authApi.login({ email, password });
-      handleAuthResponse(response);
+      await handleAuthResponse(response);
       toast.success('Logged in successfully!');
     } catch (error) {
       console.error('Login failed:', error);
@@ -87,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (name: string, email: string, password: string, role: UserRole) => {
     try {
       const response = await authApi.register({ name, email, password, role });
-      handleAuthResponse(response);
+      await handleAuthResponse(response);
       toast.success('Account created successfully!');
     } catch (error) {
       console.error('Registration failed:', error);
