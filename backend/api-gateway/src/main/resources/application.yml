@@ -115,15 +115,6 @@ spring:
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
 
-        - id: review-service
-          uri: lb://review-service
-          predicates:
-            - Path=/api/reviews,/api/reviews/**
-          filters:
-            - RewritePath=/api/reviews(?<segment>/?.*), /api/reviews$\{segment}
-            - AddResponseHeader=X-Content-Type-Options,nosniff
-            - AddResponseHeader=X-Frame-Options,DENY
-            - AddResponseHeader=X-XSS-Protection,1;mode=block
 
         - id: payment-service
           uri: ${PAYMENT_SERVICE_URL:http://payment-service:8083}
@@ -146,7 +137,7 @@ spring:
             - AddResponseHeader=X-XSS-Protection,1;mode=block
 
         - id: review-service-openapi
-          uri: lb://review-service
+          uri: ${REVIEW_SERVICE_URL:http://review-service:8089}
           predicates:
             - Path=/v3/api-docs/review-service
           filters:

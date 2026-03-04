@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-
+  REGISTRY_NAME: eventmgmtacrsadeesha.azurecr.io
   RESOURCE_GROUP: event-management-rg
   CONTAINER_APP_ENV: event-app-env
 
@@ -26,11 +26,36 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-
+      - name: Check free disk space before build
+        run: df -h
 
       - name: Build and Push Microservices
         run: |
+          declare -A services=(
+            ["backend/config-server"]="config-server"
+            ["backend/eureka-server"]="eureka-server"
+            ["backend/api-gateway"]="api-gateway"
+            ["backend/auth-service"]="auth-service"
+            ["backend/event-service"]="event-service"
+            ["backend/ticket-service"]="ticket-service"
+            ["backend/notification-service"]="notification-service"
+            ["backend/analytics-service"]="analytics-service"
+            ["backend/review-service"]="review-service"
+            ["backend/payment-service"]="payment-service"
+            ["backend/admin-service"]="admin-service"
+            ["backend/profile-service"]="profile-service"
+            ["frontend"]="frontend"
+          )
 
+          for dir in "${!services[@]}"; do
+            tag_name="${services[$dir]}"
+            echo "--- Building $tag_name from $dir ---"
+            docker build -t ${{ env.REGISTRY_NAME }}/${tag_name}:${{ github.sha }} -t ${{ env.REGISTRY_NAME }}/${tag_name}:latest ./${dir}
+            
+            echo "--- Pushing $tag_name ---"
+            docker push ${{ env.REGISTRY_NAME }}/${tag_name}:${{ github.sha }}
+            docker push ${{ env.REGISTRY_NAME }}/${tag_name}:latest
+          done
 
   deploy:
     runs-on: ubuntu-latest
@@ -44,4 +69,19 @@ jobs:
       - name: Deploy to Azure Container Apps
         run: |
           services=(
-
+            "config-server" "eureka-server" "api-gateway" "auth-service" "profile-service" 
+            "event-service" "ticket-service" "notification-service" 
+            "analytics-service" "review-service" "payment-service" "admin-service" "frontend"
+          )
+          for service in "${services[@]}"; do
+            echo "Updating Azure Container App: ${service}..."
+            # Check if container app exists first
+            if az containerapp show -n ${service} -g ${{ env.RESOURCE_GROUP }} &> /dev/null; then
+              az containerapp update \
+                --name ${service} \
+                --resource-group ${{ env.RESOURCE_GROUP }} \
+                --image ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }}
+            else
+              echo "Container app ${service} not found. Skipping update..."
+            fi
+          done
