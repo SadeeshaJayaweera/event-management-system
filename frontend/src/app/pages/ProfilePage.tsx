@@ -133,7 +133,7 @@ export function ProfilePage() {
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Email Address</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {user?.id ? `user-${user.id.slice(0, 8)}@eventflow.com` : 'Not available'}
+                    {user?.email || 'Not available'}
                   </p>
                 </div>
               </div>
