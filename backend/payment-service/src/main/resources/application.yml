@@ -4,6 +4,20 @@ server:
 spring:
   application:
     name: payment-service
+  datasource:
+    url: jdbc:h2:file:/data/paymentdb;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
 
 eureka:
   client:
@@ -12,11 +26,16 @@ eureka:
   instance:
     preferIpAddress: true
 
-# PayHere Payment Gateway Configuration
 payhere:
   merchant-id: "1234081"
-  merchant-secret: "MjU1NDkyODg2MTExNjMxOTA2NTgxNTU3MDk3Nzc3MTM4NzY4NDA3OA=="
-  mode: sandbox
+  merchant-secret: "MzQ3MjQ4MzE4NDkwNTE5MjM0MzMzMjYyOTM1ODQyMTI4NzQ5MjA1"
+  sandbox: true
+  return-url: "http://localhost:3000/payment/success"
+  cancel-url: "http://localhost:3000/attendee"
+  notify-url: "http://host.docker.internal:8080/api/payment/notify"
+
+ticket-service:
+  url: "http://ticket-service:8084"
 
 # Springdoc OpenAPI Configuration
 springdoc:
