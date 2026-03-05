@@ -71,7 +71,7 @@ public class AuthService {
 
   public AuthResponse login(LoginRequest request) {
     User user = userRepository.findByEmail(request.getEmail())
-      .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+        .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
 
     if (!encoder.matches(request.getPassword(), user.getPasswordHash())) {
       throw new IllegalArgumentException("Invalid credentials");
@@ -113,4 +113,3 @@ public class AuthService {
     return Keys.hmacShaKeyFor(keyBytes);
   }
 }
-

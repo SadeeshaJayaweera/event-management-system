@@ -3,11 +3,10 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn -Dhttps.protocols=TLSv1.2 dependency:go-offline -B
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN for i in 1 2 3 4 5; do mvn clean package -DskipTests && break; done
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8085
 ENTRYPOINT ["java", "-jar", "app.jar"]
-

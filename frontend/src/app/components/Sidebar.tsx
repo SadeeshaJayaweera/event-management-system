@@ -14,6 +14,7 @@ export function Sidebar({ activeTab, setActiveTab, onLogout, userRole }: Sidebar
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "events", label: "Events", icon: Calendar },
     { id: "attendees", label: "Attendees", icon: Users },
+    { id: "refunds", label: "Refunds", icon: DollarSign },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -50,17 +51,17 @@ export function Sidebar({ activeTab, setActiveTab, onLogout, userRole }: Sidebar
       </div>
 
       <div className="p-4 border-t border-gray-200">
-         <button 
-           onClick={() => setActiveTab("create-event")}
-           className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm font-medium"
-         >
+        <button
+          onClick={() => setActiveTab("create-event")}
+          className="w-full flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg transition-colors duration-200 shadow-sm font-medium"
+        >
           <PlusCircle className="w-4 h-4" />
           <span>Create Event</span>
         </button>
       </div>
 
       <div className="p-4">
-        <button 
+        <button
           onClick={onLogout}
           className="w-full flex items-center space-x-3 px-4 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
         >

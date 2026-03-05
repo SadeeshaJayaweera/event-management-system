@@ -21,14 +21,32 @@ export function AttendeeDashboard() {
     
     const loadData = async () => {
       try {
-        const [eventsData, ticketsData]: [EventItem[], TicketItem[]] = await Promise.all([
+        // Load events and user's payments in parallel
+        const [eventsData, userPayments]: [EventItem[], PaymentStatus[]] = await Promise.all([
           eventApi.list(),
           ticketApi.list({ userId: user.id }),
         ]);
         setEvents(eventsData);
         setMyTickets(ticketsData);
 
-        const ticketEventIds = new Set(ticketsData.map((ticket) => ticket.eventId));
+        // Build a set of current event IDs
+        const allEventIds = new Set(eventsData.map(e => e.id));
+
+        // Find COMPLETED or REFUNDED payments belonging to this user for events that no longer exist
+        const cancelled = userPayments.filter(
+          p => (p.status === 'COMPLETED' || p.status === 'REFUNDED') && !allEventIds.has(p.eventId)
+        );
+        setCancelledPayments(cancelled);
+
+        // Pre-mark any already-refunded payments as success (so they show green card on load)
+        const alreadyRefunded = new Set(cancelled.filter(p => p.status === 'REFUNDED').map(p => p.orderId));
+        if (alreadyRefunded.size > 0) {
+          setRefundedOrderIds(alreadyRefunded);
+        }
+
+        // For active tickets, load from ticket service as normal
+        const ticketsData: TicketItem[] = await ticketApi.list({ attendeeId: user.id }).catch(() => []);
+        const ticketEventIds = new Set(ticketsData.map(t => t.eventId));
         const userTicketedEvents = eventsData.filter(e => ticketEventIds.has(e.id));
         setMyTicketedEvents(userTicketedEvents);
       } catch (error) {
@@ -217,6 +235,129 @@ export function AttendeeDashboard() {
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
+            {/* Refund Confirmation Modal */}
+            {pendingRefundPayment && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                  <div className="flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <RefreshCw className="w-6 h-6 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Request Refund</h3>
+                        <p className="text-gray-500 text-xs">Enter your bank details to receive the refund</p>
+                      </div>
+                    </div>
+
+                    {/* Refund Summary */}
+                    <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-200">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Event</span>
+                        <span className="text-sm font-semibold text-gray-900">{pendingRefundPayment.eventTitle}</span>
+                      </div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Refund Amount</span>
+                        <span className="font-bold text-green-700">{pendingRefundPayment.currency} {Number(pendingRefundPayment.amount).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500 uppercase tracking-wide font-medium">Order ID</span>
+                        <span className="text-xs font-mono text-gray-600">{pendingRefundPayment.orderId}</span>
+                      </div>
+                    </div>
+
+                    {/* Bank Details Form */}
+                    <div className="space-y-3 mb-5">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bank Details</p>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Bank Name <span className="text-red-500">*</span></label>
+                        <input
+                          type="text" placeholder="e.g. Bank of Ceylon"
+                          value={bankDetails.bankName}
+                          onChange={e => setBankDetails(d => ({ ...d, bankName: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Branch</label>
+                        <input
+                          type="text" placeholder="e.g. Colombo Main"
+                          value={bankDetails.bankBranch}
+                          onChange={e => setBankDetails(d => ({ ...d, bankBranch: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Account Holder Name <span className="text-red-500">*</span></label>
+                        <input
+                          type="text" placeholder="Full name as on bank account"
+                          value={bankDetails.bankAccountName}
+                          onChange={e => setBankDetails(d => ({ ...d, bankAccountName: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Account Number <span className="text-red-500">*</span></label>
+                        <input
+                          type="text" placeholder="e.g. 01234567890"
+                          value={bankDetails.bankAccountNumber}
+                          onChange={e => setBankDetails(d => ({ ...d, bankAccountNumber: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => { setPendingRefundPayment(null); setBankDetails({ bankName: '', bankBranch: '', bankAccountName: '', bankAccountNumber: '' }); }}
+                        disabled={refundingOrderId === pendingRefundPayment.orderId}
+                        className="flex-1 py-2.5 px-4 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        disabled={
+                          refundingOrderId === pendingRefundPayment.orderId ||
+                          !bankDetails.bankName.trim() ||
+                          !bankDetails.bankAccountName.trim() ||
+                          !bankDetails.bankAccountNumber.trim()
+                        }
+                        onClick={async () => {
+                          const orderId = pendingRefundPayment.orderId;
+                          setRefundingOrderId(orderId);
+                          try {
+                            await paymentApi.refundPayment(orderId, {
+                              bankName: bankDetails.bankName,
+                              bankBranch: bankDetails.bankBranch,
+                              bankAccountName: bankDetails.bankAccountName,
+                              bankAccountNumber: bankDetails.bankAccountNumber,
+                            });
+                            setRefundedOrderIds(prev => new Set([...prev, orderId]));
+                            setPendingRefundPayment(null);
+                            setBankDetails({ bankName: '', bankBranch: '', bankAccountName: '', bankAccountNumber: '' });
+                            toast.success('Refund request submitted!');
+                          } catch {
+                            toast.error('Refund failed. Please contact support.');
+                          } finally {
+                            setRefundingOrderId(null);
+                          }
+                        }}
+                        className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
+                      >
+                        {refundingOrderId === pendingRefundPayment.orderId ? (
+                          <><RefreshCw className="w-4 h-4 animate-spin" /> Submitting...</>
+                        ) : (
+                          <>✓ Submit Refund Request</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">My Tickets</h2>
@@ -229,10 +370,8 @@ export function AttendeeDashboard() {
                 <Ticket className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900">No tickets yet</h3>
                 <p className="text-gray-500 mt-2 mb-6">Browse events and book your first experience!</p>
-                <button
-                  onClick={() => setActiveTab('discover')}
-                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                >
+                <button onClick={() => setActiveTab('discover')}
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
                   Browse Events
                 </button>
               </div>
