@@ -3,7 +3,6 @@ name: Build and Deploy to Azure Container Apps
 on:
   push:
     branches:
-      - master
       - main
   workflow_dispatch:
 
@@ -44,7 +43,6 @@ jobs:
             ["backend/payment-service"]="payment-service"
             ["backend/admin-service"]="admin-service"
             ["backend/profile-service"]="profile-service"
-            ["backend/attendee-service"]="attendee-service"
             ["frontend"]="frontend"
           )
 
@@ -73,7 +71,7 @@ jobs:
             "config-server" "eureka-server" "api-gateway" "auth-service" "profile-service" 
             "event-service" "ticket-service" "notification-service" 
             "analytics-service" "review-service" "payment-service" "admin-service"
-            "attendee-service" "frontend"
+            "frontend"
           )
           for service in "${services[@]}"; do
             echo "Updating Azure Container App: ${service}..."
