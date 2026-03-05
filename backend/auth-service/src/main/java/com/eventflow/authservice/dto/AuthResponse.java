@@ -7,12 +7,14 @@ public class AuthResponse {
   private String name;
   private String role;
   private String token;
+  private String email;
 
-  public AuthResponse(UUID userId, String name, String role, String token) {
+  public AuthResponse(UUID userId, String name, String role, String token, String email) {
     this.userId = userId;
     this.name = name;
     this.role = role;
     this.token = token;
+    this.email = email;
   }
 
   public UUID getUserId() {
@@ -30,5 +32,8 @@ public class AuthResponse {
   public String getToken() {
     return token;
   }
-}
 
+  public String getEmail() {
+    return email;
+  }
+}

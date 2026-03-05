@@ -36,7 +36,7 @@ public class EventService {
 
   public Event get(UUID id) {
     return eventRepository.findById(id)
-      .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        .orElseThrow(() -> new IllegalArgumentException("Event not found"));
   }
 
   public Event create(EventCreateRequest request) {
@@ -171,4 +171,3 @@ public class EventService {
     eventRepository.deleteById(id);
   }
 }
-

@@ -44,6 +44,7 @@ jobs:
             ["backend/payment-service"]="payment-service"
             ["backend/admin-service"]="admin-service"
             ["backend/profile-service"]="profile-service"
+            ["backend/attendee-service"]="attendee-service"
             ["frontend"]="frontend"
           )
 
@@ -71,7 +72,8 @@ jobs:
           services=(
             "config-server" "eureka-server" "api-gateway" "auth-service" "profile-service" 
             "event-service" "ticket-service" "notification-service" 
-            "analytics-service" "review-service" "payment-service" "admin-service" "frontend"
+            "analytics-service" "review-service" "payment-service" "admin-service"
+            "attendee-service" "frontend"
           )
           for service in "${services[@]}"; do
             echo "Updating Azure Container App: ${service}..."
