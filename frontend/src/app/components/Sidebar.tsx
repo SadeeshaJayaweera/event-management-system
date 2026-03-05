@@ -1,5 +1,4 @@
-
-import { Calendar, Home, Users, Settings, LogOut, PlusCircle, Shield } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogOut, PlusCircle, Shield, DollarSign } from "lucide-react";
 import clsx from "clsx";
 
 interface SidebarProps {
@@ -18,7 +17,6 @@ export function Sidebar({ activeTab, setActiveTab, onLogout, userRole }: Sidebar
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  // Add admin option only for users with admin role
   if (userRole === "admin") {
     menuItems.splice(3, 0, { id: "admin", label: "Admin Panel", icon: Shield });
   }

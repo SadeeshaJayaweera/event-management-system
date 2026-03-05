@@ -1,5 +1,5 @@
 
-import { paymentApi, type PaymentStatus } from "../api/eventflow";
+import { paymentApi, type PaymentStatus } from "../services/eventflow";
 import { useState, useEffect } from "react";
 import { DollarSign, User, Calendar, CreditCard, CheckCircle, Clock, ChevronRight, ArrowLeft, Building, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
