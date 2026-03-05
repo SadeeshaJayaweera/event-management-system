@@ -32,6 +32,9 @@ class AdminControllerTest {
   @MockBean
   private AdminAnalyticsService adminAnalyticsService;
 
+  @MockBean
+  private com.eventflow.adminservice.service.BroadcastService broadcastService;
+
   @Test
   void getDashboardStats_shouldReturnStats() throws Exception {
     DashboardStats stats = new DashboardStats(100, 45, 55, 500, 1200, 3500);
