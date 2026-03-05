@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "event-service")
+@FeignClient(name = "event-service", url = "${EVENT_SERVICE_URL:http://event-service:8081}")
 public interface EventServiceClient {
 
   @GetMapping("/api/events")

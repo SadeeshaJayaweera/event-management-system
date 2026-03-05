@@ -7,6 +7,9 @@ spring:
 
 eureka:
   client:
+    enabled: ${EUREKA_CLIENT_ENABLED:false}
+    fetchRegistry: ${EUREKA_CLIENT_FETCH_REGISTRY:false}
+    registerWithEureka: ${EUREKA_CLIENT_REGISTER_WITH_EUREKA:false}
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
   instance:
@@ -20,9 +23,22 @@ feign:
         readTimeout: 5000
         loggerLevel: basic
 
+# Direct service URLs for Azure Container Apps (override Eureka discovery)
+event-service:
+  url: ${EVENT_SERVICE_URL:http://event-service:8081}
+auth-service:
+  url: ${AUTH_SERVICE_URL:http://auth-service:8082}
+ticket-service:
+  url: ${TICKET_SERVICE_URL:http://ticket-service:8084}
+notification-service:
+  url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8085}
+profile-service:
+  url: ${PROFILE_SERVICE_URL:http://profile-service:8088}
+
 # Springdoc OpenAPI Configuration
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
