@@ -24,10 +24,10 @@ public class AuthService {
   private final UserRepository userRepository;
   private final NotificationServiceClient notificationClient;
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-  
+
   @Value("${jwt.secret:bXlTZWNyZXRLZXkxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ=}")
   private String secretKey;
-  
+
   @Value("${jwt.expiration:86400000}") // 24 hours in milliseconds
   private long jwtExpiration;
 
@@ -48,25 +48,23 @@ public class AuthService {
     user.setPasswordHash(encoder.encode(request.getPassword()));
     user.setStatus("active");
 
-    
     User saved = userRepository.save(user);
-    
+
     // Send notifications to all admins
     try {
       List<User> admins = userRepository.findByRole("admin");
       for (User admin : admins) {
         notificationClient.sendInAppNotification(
-          admin.getId(),
-          "NEW_USER_REGISTERED",
-          "New user registered: " + saved.getName(),
-          "/admin/users/" + saved.getId()
-        );
+            admin.getId(),
+            "NEW_USER_REGISTERED",
+            "New user registered: " + saved.getName(),
+            "/admin/users/" + saved.getId());
       }
     } catch (Exception e) {
       System.err.println("Failed to send user registration notifications: " + e.getMessage());
     }
-    
-    return new AuthResponse(saved.getId(), saved.getName(), saved.getRole(), issueToken(saved));
+
+    return new AuthResponse(saved.getId(), saved.getName(), saved.getRole(), issueToken(saved), saved.getEmail());
   }
 
   public AuthResponse login(LoginRequest request) {
@@ -81,7 +79,7 @@ public class AuthService {
       throw new IllegalArgumentException("Your account has been banned. Please contact support.");
     }
 
-    return new AuthResponse(user.getId(), user.getName(), user.getRole(), issueToken(user));
+    return new AuthResponse(user.getId(), user.getName(), user.getRole(), issueToken(user), user.getEmail());
   }
 
   public List<User> getUsersByRole(String role) {
@@ -95,19 +93,19 @@ public class AuthService {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", user.getId().toString()); // Convert UUID to String
     claims.put("role", user.getRole());
-    
+
     Date now = new Date();
     Date expiration = new Date(now.getTime() + jwtExpiration);
-    
+
     return Jwts.builder()
-            .claims(claims)
-            .subject(user.getEmail())
-            .issuedAt(now)
-            .expiration(expiration)
-            .signWith(getSignInKey())
-            .compact();
+        .claims(claims)
+        .subject(user.getEmail())
+        .issuedAt(now)
+        .expiration(expiration)
+        .signWith(getSignInKey())
+        .compact();
   }
-  
+
   private SecretKey getSignInKey() {
     byte[] keyBytes = Decoders.BASE64.decode(secretKey);
     return Keys.hmacShaKeyFor(keyBytes);
