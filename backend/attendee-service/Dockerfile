@@ -7,5 +7,5 @@ RUN for i in 1 2 3 4 5; do mvn clean package -DskipTests && break; done
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
-EXPOSE 8083
+EXPOSE 8090
 ENTRYPOINT ["java", "-jar", "app.jar"]
