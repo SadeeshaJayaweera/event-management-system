@@ -5,15 +5,20 @@ spring:
   application:
     name: analytics-service
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://db.mcbdtnqldohdvzmnvvsq.supabase.co:5432/postgres?currentSchema=analytics_schema}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://eventmgmt-pg-db.postgres.database.azure.com:5432/postgres?currentSchema=analytics_schema&sslmode=require}
     driverClassName: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:weliveonearth@}
+    username: ${SPRING_DATASOURCE_USERNAME:postgresadmin}
+    password: ${SPRING_DATASOURCE_PASSWORD:EventManagement123!}
   jpa:
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
     hibernate:
       ddl-auto: update
     show-sql: false
+    properties:
+      hibernate:
+        default_schema: ${SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA:analytics_schema}
+        hbm2ddl:
+          create_namespaces: true
 eureka:
   client:
     enabled: false
