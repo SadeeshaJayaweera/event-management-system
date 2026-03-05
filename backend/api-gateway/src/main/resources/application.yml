@@ -15,11 +15,10 @@ spring:
       discovery:
         locator:
           enabled: false
-          lower-case-service-id: true
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost,*}"
+            allowedOrigins: "${CORS_ALLOWED_ORIGINS:*}"
             allowedMethods:
               - GET
               - POST
@@ -41,7 +40,7 @@ spring:
           predicates:
             - Path=/api/auth/**
           filters:
-            - RewritePath=/api/auth(?<segment>/?.*), /api/auth$\{segment}
+            - RewritePath=/api/auth(?<segment>/?.*), /api/auth${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -51,7 +50,7 @@ spring:
           predicates:
             - Path=/api/users/**
           filters:
-            - RewritePath=/api/users(?<segment>/?.*), /api/users$\{segment}
+            - RewritePath=/api/users(?<segment>/?.*), /api/users${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -61,7 +60,7 @@ spring:
           predicates:
             - Path=/api/events/**
           filters:
-            - RewritePath=/api/events(?<segment>/?.*), /api/events$\{segment}
+            - RewritePath=/api/events(?<segment>/?.*), /api/events${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -71,7 +70,7 @@ spring:
           predicates:
             - Path=/api/tickets,/api/tickets/**
           filters:
-            - RewritePath=/api/tickets(?<segment>/?.*), /api/tickets$\{segment}
+            - RewritePath=/api/tickets(?<segment>/?.*), /api/tickets${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -81,7 +80,7 @@ spring:
           predicates:
             - Path=/api/notifications/**
           filters:
-            - RewritePath=/api/notifications(?<segment>/?.*), /api/notifications$\{segment}
+            - RewritePath=/api/notifications(?<segment>/?.*), /api/notifications${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -91,7 +90,7 @@ spring:
           predicates:
             - Path=/api/analytics/**
           filters:
-            - RewritePath=/api/analytics(?<segment>/?.*), /api/analytics$\{segment}
+            - RewritePath=/api/analytics(?<segment>/?.*), /api/analytics${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -101,7 +100,7 @@ spring:
           predicates:
             - Path=/api/admin/**
           filters:
-            - RewritePath=/api/admin(?<segment>/?.*), /api/admin$\{segment}
+            - RewritePath=/api/admin(?<segment>/?.*), /api/admin${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -111,7 +110,7 @@ spring:
           predicates:
             - Path=/api/profiles/**
           filters:
-            - RewritePath=/api/profiles(?<segment>/?.*), /api/profiles$\{segment}
+            - RewritePath=/api/profiles(?<segment>/?.*), /api/profiles${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -121,7 +120,7 @@ spring:
           predicates:
             - Path=/api/reviews,/api/reviews/**
           filters:
-            - RewritePath=/api/reviews(?<segment>/?.*), /api/reviews$\{segment}
+            - RewritePath=/api/reviews(?<segment>/?.*), /api/reviews${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
@@ -131,7 +130,7 @@ spring:
           predicates:
             - Path=/api/payment/**
           filters:
-            - RewritePath=/api/payment(?<segment>/?.*), /api/payment$\{segment}
+            - RewritePath=/api/payment(?<segment>/?.*), /api/payment${segment}
             - AddResponseHeader=X-Content-Type-Options,nosniff
             - AddResponseHeader=X-Frame-Options,DENY
             - AddResponseHeader=X-XSS-Protection,1;mode=block
