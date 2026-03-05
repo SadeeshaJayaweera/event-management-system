@@ -2,9 +2,7 @@ name: Build and Deploy to Azure Container Apps
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 env:
