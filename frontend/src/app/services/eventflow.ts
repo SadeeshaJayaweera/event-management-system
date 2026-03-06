@@ -405,6 +405,28 @@ export interface PaymentStatus {
   bankAccountNumber?: string;
 }
 
+export const notificationApi = {
+  createInApp: (payload: {
+    userId: string;
+    notificationType: string;
+    message: string;
+    actionUrl?: string;
+  }) =>
+    apiRequest<any>("/api/notifications/in-app", { method: "POST", body: payload }),
+  
+  getUserNotifications: (userId: string) =>
+    apiRequest<any[]>(`/api/notifications/user/${userId}`),
+    
+  markAsRead: (notificationId: string) =>
+    apiRequest<void>(`/api/notifications/${notificationId}/read`, { method: "PUT" }),
+    
+  markAllAsRead: (userId: string) =>
+    apiRequest<void>(`/api/notifications/user/${userId}/read-all`, { method: "PUT" }),
+    
+  getUnreadCount: (userId: string) =>
+    apiRequest<{ count: number }>(`/api/notifications/user/${userId}/unread-count`)
+};
+
 // Payment API (PayHere Integration)
 export const paymentApi = {
   initiate: (payload: {
