@@ -4,6 +4,8 @@ import com.eventflow.notificationservice.dto.InAppNotificationRequest;
 import com.eventflow.notificationservice.dto.NotificationCreateRequest;
 import com.eventflow.notificationservice.model.Notification;
 import com.eventflow.notificationservice.repository.NotificationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -12,6 +14,8 @@ import java.util.UUID;
 
 @Service
 public class NotificationService {
+
+  private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
   private final NotificationRepository notificationRepository;
   private final EmailService emailService;
