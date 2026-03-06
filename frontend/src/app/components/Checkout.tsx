@@ -141,11 +141,6 @@ export function Checkout() {
             setLoading(false);
         }
     };
-            console.error(error);
-            toast.error(error?.message || "Failed to process payment");
-            setLoading(false);
-        }
-    };
 
     if (showConfirmation) {
         return (
