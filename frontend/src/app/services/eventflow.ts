@@ -392,7 +392,17 @@ export interface PaymentStatus {
   eventTitle: string;
   amount: string;
   currency: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'REFUND_DONE';
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  bankName?: string;
+  bankBranch?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
 }
 
 // Payment API (PayHere Integration)
@@ -412,6 +422,10 @@ export const paymentApi = {
     apiRequest<void>(`/api/payment/refund`, { method: "POST", body: { orderId, ...bankDetails } }),
   getUserPayments: (userId: string) =>
     apiRequest<PaymentStatus[]>(`/api/payment/user/${userId}`),
+  getAllRefunds: () =>
+    apiRequest<PaymentStatus[]>(`/api/payment/refunds`),
+  markRefundDone: (orderId: string) =>
+    apiRequest<void>(`/api/payment/refund/${orderId}/done`, { method: "PUT" }),
 };
 
 // ---- Review Types ----

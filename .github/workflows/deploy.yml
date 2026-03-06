@@ -42,6 +42,7 @@ jobs:
             ["backend/payment-service"]="payment-service"
             ["backend/admin-service"]="admin-service"
             ["backend/profile-service"]="profile-service"
+            ["backend/attendee-service"]="attendee-service"
             ["frontend"]="frontend"
           )
 
@@ -79,21 +80,28 @@ jobs:
           PAYHERE_MERCHANT_ID="${{ secrets.PAYHERE_MERCHANT_ID }}"
           PAYHERE_MERCHANT_SECRET="${{ secrets.PAYHERE_MERCHANT_SECRET }}"
           
-          # Service configuration: service_name:port:schema:has_database
+          # Frontend URL for PayHere callbacks
+          FRONTEND_URL="${{ secrets.FRONTEND_URL }}"
+          BACKEND_API_URL="${{ secrets.BACKEND_API_URL }}"
+
+          # Service configuration: service_name:port:schema:has_database:min_replicas:cpu:memory
+          # min_replicas=1 keeps containers WARM — eliminates cold-start delays (15-30s)
+          # Critical path services (gateway, auth, event, ticket, profile) use min=1
           declare -A services=(
-            ["config-server"]="8888::false"
-            ["eureka-server"]="8761::false"
-            ["api-gateway"]="8080::false"
-            ["auth-service"]="8082:auth_schema:true"
-            ["profile-service"]="8088:profile_schema:true"
-            ["event-service"]="8081:event_schema:true"
-            ["ticket-service"]="8084:ticket_schema:true"
-            ["notification-service"]="8085:notification_schema:true"
-            ["analytics-service"]="8086:analytics_schema:true"
-            ["review-service"]="8089:review_schema:true"
-            ["payment-service"]="8083:payment_schema:true"
-            ["admin-service"]="8087:admin_schema:true"
-            ["frontend"]="3000::false"
+            ["config-server"]="8888::false:1:0.25:0.5Gi"
+            ["eureka-server"]="8761::false:1:0.25:0.5Gi"
+            ["api-gateway"]="8080::false:1:0.5:1.0Gi"
+            ["auth-service"]="8082:auth_schema:true:1:0.5:1.0Gi"
+            ["profile-service"]="8088:profile_schema:true:1:0.5:1.0Gi"
+            ["event-service"]="8081:event_schema:true:1:0.5:1.0Gi"
+            ["ticket-service"]="8084:ticket_schema:true:1:0.5:1.0Gi"
+            ["notification-service"]="8085:notification_schema:true:1:0.25:0.5Gi"
+            ["analytics-service"]="8086:analytics_schema:true:1:0.25:0.5Gi"
+            ["review-service"]="8089:review_schema:true:1:0.25:0.5Gi"
+            ["payment-service"]="8083:payment_schema:true:1:0.5:1.0Gi"
+            ["admin-service"]="8087:admin_schema:true:1:0.25:0.5Gi"
+            ["attendee-service"]="8090:attendee_schema:true:1:0.25:0.5Gi"
+            ["frontend"]="3000::false:1:0.25:0.5Gi"
           )
 
           for service in "${!services[@]}"; do
@@ -106,7 +114,7 @@ jobs:
             fi
             
             config="${services[$service]}"
-            IFS=':' read -r port schema has_database <<< "$config"
+            IFS=':' read -r port schema has_database min_replicas cpu memory <<< "$config"
             
             # Build environment variables for this service
             ENV_VARS=""
@@ -124,26 +132,40 @@ jobs:
                 ;;
               "payment-service")
                 ENV_VARS="${ENV_VARS} PAYHERE_MERCHANT_ID=${PAYHERE_MERCHANT_ID} PAYHERE_MERCHANT_SECRET=${PAYHERE_MERCHANT_SECRET}"
+                if [ -n "$FRONTEND_URL" ]; then
+                  ENV_VARS="${ENV_VARS} FRONTEND_URL=${FRONTEND_URL}"
+                fi
+                if [ -n "$BACKEND_API_URL" ]; then
+                  ENV_VARS="${ENV_VARS} BACKEND_API_URL=${BACKEND_API_URL}"
+                fi
                 ;;
             esac
 
             # Trim leading/trailing whitespace
             ENV_VARS=$(echo "$ENV_VARS" | xargs)
             
+            # Common scale args — min-replicas 1 prevents cold starts
+            SCALE_ARGS="--min-replicas ${min_replicas} --max-replicas 3"
+            RESOURCE_ARGS="--cpu ${cpu} --memory ${memory}"
+
             if [ -n "$ENV_VARS" ]; then
-              echo "Updating with environment variables..."
+              echo "  → Updating image, env vars, scale (min=${min_replicas}), resources (cpu=${cpu}, mem=${memory})..."
               az containerapp update \
                 --name ${service} \
                 --resource-group ${{ env.RESOURCE_GROUP }} \
                 --image ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }} \
                 --set-env-vars $ENV_VARS \
+                ${SCALE_ARGS} \
+                ${RESOURCE_ARGS} \
                 --output none
             else
-              echo "Updating without additional environment variables..."
+              echo "  → Updating image, scale (min=${min_replicas}), resources (cpu=${cpu}, mem=${memory})..."
               az containerapp update \
                 --name ${service} \
                 --resource-group ${{ env.RESOURCE_GROUP }} \
                 --image ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }} \
+                ${SCALE_ARGS} \
+                ${RESOURCE_ARGS} \
                 --output none
             fi
           done
