@@ -66,21 +66,88 @@ jobs:
 
       - name: Deploy to Azure Container Apps
         run: |
-          services=(
-            "config-server" "eureka-server" "api-gateway" "auth-service" "profile-service" 
-            "event-service" "ticket-service" "notification-service" 
-            "analytics-service" "review-service" "payment-service" "admin-service"
-            "frontend"
+          # PostgreSQL Configuration for Services
+          DB_HOST="${{ secrets.DB_HOST }}"
+          DB_USER="${{ secrets.DB_USER }}"
+          DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+          
+          # Notification Service Email Configuration
+          NOTIFICATION_MAIL_USERNAME="${{ secrets.NOTIFICATION_MAIL_USERNAME }}"
+          NOTIFICATION_MAIL_PASSWORD="${{ secrets.NOTIFICATION_MAIL_PASSWORD }}"
+          
+          # Payment Service Configuration
+          PAYHERE_MERCHANT_ID="${{ secrets.PAYHERE_MERCHANT_ID }}"
+          PAYHERE_MERCHANT_SECRET="${{ secrets.PAYHERE_MERCHANT_SECRET }}"
+          
+          # Service configuration: service_name:port:schema:has_database
+          declare -A services=(
+            ["config-server"]="8888::false"
+            ["eureka-server"]="8761::false"
+            ["api-gateway"]="8080::false"
+            ["auth-service"]="8082:auth_schema:true"
+            ["profile-service"]="8088:profile_schema:true"
+            ["event-service"]="8081:event_schema:true"
+            ["ticket-service"]="8084:ticket_schema:true"
+            ["notification-service"]="8085:notification_schema:true"
+            ["analytics-service"]="8086:analytics_schema:true"
+            ["review-service"]="8089:review_schema:true"
+            ["payment-service"]="8083:payment_schema:true"
+            ["admin-service"]="8087:admin_schema:true"
+            ["frontend"]="3000::false"
           )
-          for service in "${services[@]}"; do
+
+          for service in "${!services[@]}"; do
             echo "Updating Azure Container App: ${service}..."
+            
             # Check if container app exists first
-            if az containerapp show -n ${service} -g ${{ env.RESOURCE_GROUP }} &> /dev/null; then
+            if ! az containerapp show -n ${service} -g ${{ env.RESOURCE_GROUP }} &> /dev/null; then
+              echo "⚠️  Container app ${service} not found. Skipping update..."
+              continue
+            fi
+            
+            config="${services[$service]}"
+            IFS=':' read -r port schema has_database <<< "$config"
+            
+            # Build environment variables for this service
+            ENV_VARS=""
+            
+            # Database services need PostgreSQL credentials
+            if [ "$has_database" = "true" ]; then
+              DB_URL="jdbc:postgresql://${DB_HOST}:5432/postgres?currentSchema=${schema}&sslmode=require"
+              ENV_VARS="SPRING_DATASOURCE_URL=${DB_URL} SPRING_DATASOURCE_USERNAME=${DB_USER} SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}"
+            fi
+            
+            # Service-specific configurations
+            case "${service}" in
+              "notification-service")
+                ENV_VARS="${ENV_VARS} SPRING_MAIL_USERNAME=${NOTIFICATION_MAIL_USERNAME} SPRING_MAIL_PASSWORD=${NOTIFICATION_MAIL_PASSWORD}"
+                ;;
+              "payment-service")
+                ENV_VARS="${ENV_VARS} PAYHERE_MERCHANT_ID=${PAYHERE_MERCHANT_ID} PAYHERE_MERCHANT_SECRET=${PAYHERE_MERCHANT_SECRET}"
+                ;;
+            esac
+
+            # Trim leading/trailing whitespace
+            ENV_VARS=$(echo "$ENV_VARS" | xargs)
+            
+            if [ -n "$ENV_VARS" ]; then
+              echo "Updating with environment variables..."
               az containerapp update \
                 --name ${service} \
                 --resource-group ${{ env.RESOURCE_GROUP }} \
-                --image ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }}
+                --image ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }} \
+                --set-env-vars $ENV_VARS \
+                --output none
             else
-              echo "Container app ${service} not found. Skipping update..."
+              echo "Updating without additional environment variables..."
+              az containerapp update \
+                --name ${service} \
+                --resource-group ${{ env.RESOURCE_GROUP }} \
+                --image ${{ env.REGISTRY_NAME }}/${service}:${{ github.sha }} \
+                --output none
             fi
           done
+          
+          echo "========================================"
+          echo "✅ All services deployed successfully!"
+          echo "========================================"
