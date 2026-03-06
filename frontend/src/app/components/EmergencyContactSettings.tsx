@@ -53,14 +53,24 @@ export function EmergencyContactSettings() {
       toast.error('Please fill in all required fields');
       return;
     }
+    // Clean up optional fields: send null instead of empty strings to avoid
+    // backend validation issues (e.g. @Email rejects "")
+    const payload: EmergencyContactRequest = {
+      fullName: formData.fullName,
+      relationship: formData.relationship,
+      phoneNumber: formData.phoneNumber,
+      alternatePhoneNumber: formData.alternatePhoneNumber || undefined,
+      email: formData.email?.trim() || undefined,
+      address: formData.address || undefined,
+    };
     try {
       setSaving(true);
       try {
-        await profileApi.updateEmergencyContact(user.id, formData);
+        await profileApi.updateEmergencyContact(user.id, payload);
       } catch {
         // Profile might not exist yet — create it then retry
         await profileApi.createProfile(user.id);
-        await profileApi.updateEmergencyContact(user.id, formData);
+        await profileApi.updateEmergencyContact(user.id, payload);
       }
       setHasContact(true);
       toast.success('Emergency contact saved successfully!');

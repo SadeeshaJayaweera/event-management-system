@@ -1,5 +1,6 @@
 package com.eventflow.ticketservice.client;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -9,17 +10,19 @@ import java.util.UUID;
 @Component
 public class EventServiceClient {
   private final RestTemplate restTemplate;
-  private static final String EVENT_SERVICE_URL = "http://event-service/api/events";
+  private final String eventServiceUrl;
 
-  public EventServiceClient(RestTemplate restTemplate) {
+  public EventServiceClient(RestTemplate restTemplate,
+      @Value("${event-service.url:http://event-service:8081}") String eventServiceUrl) {
     this.restTemplate = restTemplate;
+    this.eventServiceUrl = eventServiceUrl;
   }
 
   public Map<String, Object> getEvent(UUID eventId) {
     try {
-      return restTemplate.getForObject(EVENT_SERVICE_URL + "/" + eventId, Map.class);
+      return restTemplate.getForObject(eventServiceUrl + "/api/events/" + eventId, Map.class);
     } catch (Exception e) {
-      System.err.println("Failed to fetch event: " + e.getMessage());
+      System.err.println("Failed to fetch event from " + eventServiceUrl + ": " + e.getMessage());
       return null;
     }
   }

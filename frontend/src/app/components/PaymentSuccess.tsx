@@ -31,15 +31,22 @@ export function PaymentSuccess() {
                 const pendingPurchase = JSON.parse(pendingStr);
 
                 const { eventId, price, title, quantity = 1, currency = 'LKR' } = pendingPurchase;
-                const userStr = localStorage.getItem('user');
+                const authStr = localStorage.getItem('eventflow_auth');
 
-                if (!userStr) {
+                if (!authStr) {
                     setStatus('error');
                     setMessage('User session not found. Please login again.');
                     return;
                 }
 
-                const user = JSON.parse(userStr);
+                const authData = JSON.parse(authStr);
+                const user = authData.user;
+
+                if (!user || !user.id) {
+                    setStatus('error');
+                    setMessage('User session is invalid. Please login again.');
+                    return;
+                }
 
                 // Call backend to create ticket
                 await ticketApi.purchase({

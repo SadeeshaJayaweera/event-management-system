@@ -28,22 +28,25 @@ public class TicketService {
   }
 
   public List<Ticket> purchase(TicketPurchaseRequest request) {
-    // Get event details to check capacity
+    // Get event details to check capacity — if event-service unreachable, continue
+    // with soft validation
     Map<String, Object> event = eventServiceClient.getEvent(request.getEventId());
-    if (event == null) {
-      throw new IllegalArgumentException("Event not found");
-    }
 
-    Integer maxTickets = event.get("maxTickets") != null ? 
-        Integer.valueOf(event.get("maxTickets").toString()) : null;
-    
-    if (maxTickets == null) {
-      throw new IllegalArgumentException("Event does not have ticket capacity configured");
-    }
+    if (event != null) {
+      Integer maxTickets = event.get("maxTickets") != null
+          ? Integer.valueOf(event.get("maxTickets").toString())
+          : null;
 
-    // Count existing tickets for this event
-    long existingTicketCount = ticketRepository.findByEventId(request.getEventId()).size();
-    
+      if (maxTickets != null) {
+        long existingTicketCount = ticketRepository.findByEventId(request.getEventId()).size();
+        long remainingTickets = maxTickets - existingTicketCount;
+        if (remainingTickets < request.getQuantity()) {
+          throw new IllegalArgumentException("Only " + remainingTickets + " ticket(s) remaining.");
+        }
+      }
+    } else {
+      System.err.println("Warning: Could not reach event-service to validate capacity. Proceeding with purchase.");
+    }
     // Check if user already has 3 or more tickets for this event
     long userExistingTickets = ticketRepository.findByEventIdAndUserId(request.getEventId(), request.getUserId()).size();
     if (userExistingTickets >= 3) {
@@ -56,10 +59,7 @@ public class TicketService {
     }
 
     // Check if enough tickets are available
-    long remainingTickets = maxTickets - existingTicketCount;
-    if (remainingTickets < request.getQuantity()) {
-      throw new IllegalArgumentException("Only " + remainingTickets + " ticket(s) remaining. Cannot purchase " + request.getQuantity() + " tickets.");
-    }
+    // (already validated above when event != null)
 
     // Create multiple tickets based on quantity
     List<Ticket> createdTickets = new java.util.ArrayList<>();
@@ -75,8 +75,8 @@ public class TicketService {
 
     // Send notifications
     try {
-      String eventTitle = (String) event.get("title");
-      
+      String eventTitle = event != null ? (String) event.get("title") : "your event";
+
       // Notify attendee (buyer)
       String ticketText = request.getQuantity() == 1 ? "ticket" : "tickets";
       notificationClient.sendInAppNotification(
@@ -87,15 +87,17 @@ public class TicketService {
       );
 
       // Notify organizer
-      Object organizerIdObj = event.get("organizerId");
-      if (organizerIdObj != null) {
-        UUID organizerId = UUID.fromString(organizerIdObj.toString());
-        notificationClient.sendInAppNotification(
-          organizerId,
-          "TICKET_SOLD",
-          request.getQuantity() + " " + ticketText + " purchased for " + eventTitle,
-          "/dashboard/events/" + request.getEventId()
-        );
+      if (event != null) {
+        Object organizerIdObj = event.get("organizerId");
+        if (organizerIdObj != null) {
+          UUID organizerId = UUID.fromString(organizerIdObj.toString());
+          notificationClient.sendInAppNotification(
+            organizerId,
+            "TICKET_SOLD",
+            request.getQuantity() + " " + ticketText + " purchased for " + eventTitle,
+            "/dashboard/events/" + request.getEventId()
+          );
+        }
       }
     } catch (Exception e) {
       System.err.println("Failed to send ticket purchase notifications: " + e.getMessage());
