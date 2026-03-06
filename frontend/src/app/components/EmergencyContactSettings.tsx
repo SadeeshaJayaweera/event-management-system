@@ -27,7 +27,6 @@ export function EmergencyContactSettings() {
 
   const loadEmergencyContact = async () => {
     if (!user) return;
-
     try {
       setLoading(true);
       const contact: EmergencyContact = await profileApi.getEmergencyContact(user.id);
@@ -40,8 +39,8 @@ export function EmergencyContactSettings() {
         email: contact.email || '',
         address: contact.address || '',
       });
-    } catch (error: any) {
-      // No emergency contact exists yet
+    } catch {
+      // No emergency contact exists yet — that's fine
       setHasContact(false);
     } finally {
       setLoading(false);
@@ -50,16 +49,19 @@ export function EmergencyContactSettings() {
 
   const handleSave = async () => {
     if (!user) return;
-
-    // Validate required fields
     if (!formData.fullName || !formData.relationship || !formData.phoneNumber) {
       toast.error('Please fill in all required fields');
       return;
     }
-
     try {
       setSaving(true);
-      await profileApi.updateEmergencyContact(user.id, formData);
+      try {
+        await profileApi.updateEmergencyContact(user.id, formData);
+      } catch {
+        // Profile might not exist yet — create it then retry
+        await profileApi.createProfile(user.id);
+        await profileApi.updateEmergencyContact(user.id, formData);
+      }
       setHasContact(true);
       toast.success('Emergency contact saved successfully!');
     } catch (error) {
@@ -72,11 +74,7 @@ export function EmergencyContactSettings() {
 
   const handleDelete = async () => {
     if (!user) return;
-
-    if (!confirm('Are you sure you want to remove your emergency contact?')) {
-      return;
-    }
-
+    if (!confirm('Are you sure you want to remove your emergency contact?')) return;
     try {
       setSaving(true);
       await profileApi.deleteEmergencyContact(user.id);
@@ -98,10 +96,6 @@ export function EmergencyContactSettings() {
     }
   };
 
-  const handleSkip = () => {
-    toast.info('You can add emergency contact information anytime');
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -119,7 +113,7 @@ export function EmergencyContactSettings() {
             Emergency Contact
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            {user?.role === 'attendee' 
+            {user?.role === 'attendee'
               ? 'Add emergency contact information for event safety (recommended for attendees)'
               : 'Add emergency contact information (optional)'}
           </p>
@@ -136,7 +130,6 @@ export function EmergencyContactSettings() {
       </div>
 
       <div className="space-y-4">
-        {/* Required Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -150,7 +143,6 @@ export function EmergencyContactSettings() {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Relationship <span className="text-red-500">*</span>
@@ -170,7 +162,6 @@ export function EmergencyContactSettings() {
               <option value="Other">Other</option>
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Primary Phone <span className="text-red-500">*</span>
@@ -179,31 +170,25 @@ export function EmergencyContactSettings() {
               type="tel"
               value={formData.phoneNumber}
               onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-              placeholder="+1 (234) 567-8900"
+              placeholder="+94 77 123 4567"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Alternate Phone
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Alternate Phone</label>
             <input
               type="tel"
               value={formData.alternatePhoneNumber}
               onChange={(e) => setFormData({ ...formData, alternatePhoneNumber: e.target.value })}
-              placeholder="+1 (234) 567-8901"
+              placeholder="+94 77 765 4321"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
 
-        {/* Optional Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               value={formData.email}
@@ -212,16 +197,13 @@ export function EmergencyContactSettings() {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
             <input
               type="text"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="123 Main St, City, State"
+              placeholder="123 Main St, Colombo"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -242,11 +224,10 @@ export function EmergencyContactSettings() {
         )}
       </div>
 
-      {/* Action Buttons */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         {!hasContact && (
           <button
-            onClick={handleSkip}
+            onClick={() => toast.info('You can add emergency contact information anytime')}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
             Skip for now

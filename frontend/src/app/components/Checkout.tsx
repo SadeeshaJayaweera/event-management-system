@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { paymentApi, ticketApi, eventApi, type EventItem } from "../services/eventflow";
+import { ticketApi, eventApi, type EventItem } from "../services/eventflow";
 import { Loader2, ArrowLeft, CreditCard, CheckCircle, Minus, Plus, Ticket, MapPin, Calendar, Clock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
@@ -78,15 +78,18 @@ export function Checkout() {
 
         setLoading(true);
         try {
-            const orderId = `ORDER-${Date.now()}`;
-            await paymentApi.initiate({ orderId, amount: totalPrice, currency: "LKR" });
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Direct ticket purchase – no external payment gateway
             const purchasedTickets = await ticketApi.purchase({
                 eventId: event.id, userId: user.id, price: event.price, quantity
             });
             console.log(`Successfully created ${purchasedTickets.length} ticket(s):`, purchasedTickets);
             setShowConfirmation(true);
-            toast.success(quantity === 1 ? `Payment successful! Your ticket has been created.` : `Payment successful! ${quantity} tickets have been created.`);
+            toast.success(
+                quantity === 1
+                    ? `Payment successful! Your ticket has been created.`
+                    : `Payment successful! ${quantity} tickets have been created.`
+            );
+            // Redirect to My Tickets page after brief confirmation screen
             setTimeout(() => navigate('/attendee/tickets'), 2500);
         } catch (error: any) {
             console.error(error);
@@ -245,10 +248,10 @@ export function Checkout() {
                         </div>
                     </div>
 
-                    {/* Mock payment notice */}
+                    {/* Info notice */}
                     <div style={styles.mockNotice}>
-                        <CreditCard style={{ width: 15, height: 15, color: '#6366f1', flexShrink: 0 }} />
-                        <span style={styles.mockText}>Simulated payment — no real transaction occurs</span>
+                        <Ticket style={{ width: 15, height: 15, color: '#6366f1', flexShrink: 0 }} />
+                        <span style={styles.mockText}>Your tickets will appear instantly in "My Tickets" after purchase</span>
                     </div>
 
                     {/* CTA */}
@@ -269,8 +272,8 @@ export function Checkout() {
                             </>
                         ) : (
                             <>
-                                <CreditCard style={{ width: 18, height: 18 }} />
-                                Pay LKR {totalPrice.toLocaleString()}
+                                <Ticket style={{ width: 18, height: 18 }} />
+                                Confirm Purchase · LKR {totalPrice.toLocaleString()}
                             </>
                         )}
                     </button>
