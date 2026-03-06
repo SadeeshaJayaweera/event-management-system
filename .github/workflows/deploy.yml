@@ -127,6 +127,8 @@ jobs:
             case "${service}" in
               "notification-service")
                 ENV_VARS="${ENV_VARS} SPRING_MAIL_USERNAME=${NOTIFICATION_MAIL_USERNAME} SPRING_MAIL_PASSWORD=${NOTIFICATION_MAIL_PASSWORD}"
+                # Add service URLs for inter-service communication
+                ENV_VARS="${ENV_VARS} EVENT_SERVICE_URL=http://event-service:8081 TICKET_SERVICE_URL=http://ticket-service:8084"
                 ;;
               "payment-service")
                 ENV_VARS="${ENV_VARS} PAYHERE_MERCHANT_ID=${PAYHERE_MERCHANT_ID} PAYHERE_MERCHANT_SECRET=${PAYHERE_MERCHANT_SECRET}"
@@ -136,6 +138,8 @@ jobs:
                 if [ -n "$BACKEND_API_URL" ]; then
                   ENV_VARS="${ENV_VARS} BACKEND_API_URL=${BACKEND_API_URL}"
                 fi
+                # Add ticket service URL
+                ENV_VARS="${ENV_VARS} TICKET_SERVICE_URL=http://ticket-service:8084"
                 ;;
             esac
 

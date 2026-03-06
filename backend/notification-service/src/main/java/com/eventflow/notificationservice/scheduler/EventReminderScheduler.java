@@ -2,6 +2,9 @@ package com.eventflow.notificationservice.scheduler;
 
 import com.eventflow.notificationservice.dto.InAppNotificationRequest;
 import com.eventflow.notificationservice.service.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -15,8 +18,16 @@ import java.util.UUID;
 
 @Component
 public class EventReminderScheduler {
+  private static final Logger log = LoggerFactory.getLogger(EventReminderScheduler.class);
+  
   private final NotificationService notificationService;
   private final RestTemplate restTemplate;
+
+  @Value("${event-service.url:http://event-service:8081}")
+  private String eventServiceUrl;
+
+  @Value("${ticket-service.url:http://ticket-service:8084}")
+  private String ticketServiceUrl;
 
   public EventReminderScheduler(NotificationService notificationService, RestTemplate restTemplate) {
     this.notificationService = notificationService;
@@ -26,15 +37,15 @@ public class EventReminderScheduler {
   // Run every day at 9:00 AM
   @Scheduled(cron = "0 0 9 * * ?")
   public void sendEventReminders() {
-    System.out.println("Running event reminder job at " + LocalDateTime.now());
+    log.info("Running event reminder job at {}", LocalDateTime.now());
     
     try {
       // Calculate tomorrow's date
       LocalDate tomorrow = LocalDate.now().plusDays(1);
       
       // Get all events from event-service
-      String eventServiceUrl = "http://event-service/api/events";
-      List<Map<String, Object>> events = restTemplate.getForObject(eventServiceUrl, List.class);
+      String eventsUrl = eventServiceUrl + "/api/events";
+      List<Map<String, Object>> events = restTemplate.getForObject(eventsUrl, List.class);
       
       if (events == null) return;
       
@@ -50,8 +61,8 @@ public class EventReminderScheduler {
             String timeStr = (String) event.get("time");
             
             // Get all tickets for this event
-            String ticketServiceUrl = "http://ticket-service/api/tickets?eventId=" + eventId;
-            List<Map<String, Object>> tickets = restTemplate.getForObject(ticketServiceUrl, List.class);
+            String ticketsUrl = ticketServiceUrl + "/api/tickets?eventId=" + eventId;
+            List<Map<String, Object>> tickets = restTemplate.getForObject(ticketsUrl, List.class);
             
             if (tickets != null) {
               // Send reminder to each attendee
@@ -69,11 +80,11 @@ public class EventReminderScheduler {
             }
           }
         } catch (Exception e) {
-          System.err.println("Failed to process event for reminders: " + e.getMessage());
+          log.error("Failed to process event for reminders: {}", e.getMessage());
         }
       }
     } catch (Exception e) {
-      System.err.println("Event reminder job failed: " + e.getMessage());
+      log.error("Event reminder job failed: {}", e.getMessage());
     }
   }
 }
