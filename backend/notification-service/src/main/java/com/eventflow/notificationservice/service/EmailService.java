@@ -14,14 +14,27 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:demo@eventflow.com}")
     private String fromEmail;
+
+    @Value("${app.demo-mode:true}")
+    private boolean demoMode;
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
     public void sendEmail(String to, String subject, String message) {
+        if (demoMode) {
+            // Demo mode: Just log the email instead of sending
+            log.info("DEMO MODE - Email would be sent:");
+            log.info("  From: {}", fromEmail);
+            log.info("  To: {}", to);
+            log.info("  Subject: {}", subject);
+            log.info("  Message: {}", message);
+            return;
+        }
+
         try {
             SimpleMailMessage mail = new SimpleMailMessage();
             mail.setFrom(fromEmail);

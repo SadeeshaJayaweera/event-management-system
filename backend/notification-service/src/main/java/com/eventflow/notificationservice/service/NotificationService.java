@@ -34,27 +34,18 @@ public class NotificationService {
     notification.setRecipient(request.getRecipient());
     notification.setSubject(request.getSubject());
     notification.setMessage(request.getMessage());
-    notification.setStatus("QUEUED");
+    notification.setStatus("SENT"); // Always mark as sent for demo
     notification.setCreatedAt(LocalDateTime.now());
 
     notification = notificationRepository.save(notification);
 
-    // 2️⃣ Try to send email
-    try {
-      if ("EMAIL".equalsIgnoreCase(notification.getChannel())) {
-        emailService.sendEmail(
-                notification.getRecipient(),
-                notification.getSubject(),
-                notification.getMessage()
-        );
-        notification.setStatus("SENT");
-      }
-    } catch (Exception e) {
-      notification.setStatus("FAILED");
+    // 2️⃣ For demo: Skip actual email sending, just log it
+    if ("EMAIL".equalsIgnoreCase(notification.getChannel())) {
+      log.info("DEMO MODE: Email notification created (not sent) - To: {}, Subject: {}", 
+               notification.getRecipient(), notification.getSubject());
     }
 
-    // 3️⃣ Update final status
-    return notificationRepository.save(notification);
+    return notification;
   }
 
   // In-app notification methods

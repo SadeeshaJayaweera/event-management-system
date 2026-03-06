@@ -48,6 +48,10 @@ payhere:
 ticket-service:
   url: ${TICKET_SERVICE_URL:http://ticket-service:8084}
 
+# Demo mode configuration
+app:
+  demo-mode: ${DEMO_MODE:true}
+
 # Springdoc OpenAPI Configuration
 springdoc:
   api-docs:

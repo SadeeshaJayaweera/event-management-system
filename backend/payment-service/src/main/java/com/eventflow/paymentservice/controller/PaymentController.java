@@ -21,13 +21,15 @@ public class PaymentController {
     }
 
     /**
-     * Initiates a PayHere payment session.
-     * Returns all fields required to build the PayHere checkout form.
+     * Demo-friendly payment initialization.
+     * For demo purposes, we auto-complete the payment and create tickets immediately.
      */
     @PostMapping("/init")
     public ResponseEntity<PaymentInitResponse> initPayment(
             @Valid @RequestBody PaymentInitRequest request) {
-        PaymentInitResponse response = paymentService.initPayment(request);
+        
+        // For demo: Auto-complete the payment immediately
+        PaymentInitResponse response = paymentService.initDemoPayment(request);
         return ResponseEntity.ok(response);
     }
 
