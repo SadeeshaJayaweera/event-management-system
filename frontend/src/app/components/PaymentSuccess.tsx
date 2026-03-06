@@ -1,21 +1,36 @@
 import { CheckCircle, Ticket, Home, Calendar, DollarSign, Hash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ticketApi } from "../services/eventflow";
+import { ticketApi, paymentApi } from "../services/eventflow";
 
 export function PaymentSuccess() {
     const navigate = useNavigate();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('Verifying payment...');
+    const [payment, setPayment] = useState<any>(null);
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const orderId = searchParams.get('order_id');
 
     useEffect(() => {
-        if (!orderId) return;
+        if (!orderId) {
+            setStatus('error');
+            setMessage('Order ID not found');
+            return;
+        }
 
-        // Fire the simulation (fire-and-forget) so the backend records the ticket
-        paymentApi.simulatePaymentSuccess(orderId).catch(() => { });
-
+        const createTicket = async () => {
             try {
-                const { eventId, price, title, quantity = 1 } = JSON.parse(pendingPurchase);
+                // Fire the simulation (fire-and-forget) so the backend records the ticket
+                paymentApi.simulatePaymentSuccess(orderId).catch(() => { });
+
+                const pendingStr = localStorage.getItem('pending_purchase');
+                if (!pendingStr) {
+                    throw new Error('No pending purchase found');
+                }
+                const pendingPurchase = JSON.parse(pendingStr);
+
+                const { eventId, price, title, quantity = 1, currency = 'LKR' } = pendingPurchase;
                 const userStr = localStorage.getItem('user');
 
                 if (!userStr) {
@@ -37,6 +52,16 @@ export function PaymentSuccess() {
                 setStatus('success');
                 localStorage.removeItem('pending_purchase'); // Clear pending purchase
 
+                setPayment({
+                    amount: price * quantity,
+                    currency: currency,
+                    eventTitle: title,
+                    createdAt: new Date().toISOString(),
+                    firstName: user.firstName || user.name,
+                    lastName: user.lastName || '',
+                    email: user.email
+                });
+
             } catch (error) {
                 console.error(error);
                 setStatus('error');
@@ -45,7 +70,7 @@ export function PaymentSuccess() {
         };
 
         createTicket();
-    }, []);
+    }, [orderId]);
 
     const formatDate = (dateStr?: string | null) => {
         if (!dateStr) return new Date().toLocaleString('en-US', {
@@ -57,6 +82,36 @@ export function PaymentSuccess() {
             hour: '2-digit', minute: '2-digit',
         });
     };
+
+    if (status === 'loading') {
+        return (
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+                <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">{message}</h2>
+                <p className="text-gray-500">Please wait while we confirm your ticket.</p>
+            </div>
+        );
+    }
+
+    if (status === 'error') {
+        return (
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-2xl text-red-600 font-bold px-4 py-2 border-2 border-red-600 rounded-full">X</span>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Verification Failed</h2>
+                <p className="text-gray-500 text-center max-w-md mb-8">
+                    {message}
+                </p>
+                <button
+                    onClick={() => navigate('/attendee')}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-100"
+                >
+                    Back to Dashboard
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen font-sans text-gray-900 bg-gradient-to-br from-emerald-50 via-white to-indigo-50 flex flex-col items-center justify-center px-4 py-12">
@@ -104,7 +159,7 @@ export function PaymentSuccess() {
                                     <Hash className="w-3.5 h-3.5" />
                                     <span className="text-xs font-semibold uppercase tracking-wider">Order ID</span>
                                 </div>
-                                <p className="font-bold text-gray-900 text-sm font-mono">{orderId}</p>
+                                <p className="font-bold text-gray-900 text-sm font-mono truncate">{orderId}</p>
                             </div>
 
                             <div className="p-4 bg-gray-50 rounded-2xl">
@@ -120,8 +175,8 @@ export function PaymentSuccess() {
                             {payment && (
                                 <div className="p-4 bg-gray-50 rounded-2xl">
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Ticket Holder</p>
-                                    <p className="font-bold text-gray-900">{payment.firstName} {payment.lastName}</p>
-                                    <p className="text-xs text-gray-500 mt-0.5">{payment.email}</p>
+                                    <p className="font-bold text-gray-900 truncate">{payment.firstName} {payment.lastName}</p>
+                                    <p className="text-xs text-gray-500 mt-0.5 truncate">{payment.email}</p>
                                 </div>
                             )}
                         </div>
@@ -139,14 +194,14 @@ export function PaymentSuccess() {
                     <div className="px-8 pb-8 space-y-3">
                         <button
                             onClick={() => navigate('/attendee/tickets')}
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors gap-2"
                         >
                             <Ticket className="w-5 h-5" />
                             View My Tickets
                         </button>
                         <button
                             onClick={() => navigate('/attendee')}
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors gap-2"
                         >
                             <Home className="w-4 h-4" />
                             Back to Home

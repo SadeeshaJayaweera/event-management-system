@@ -151,9 +151,9 @@ export const ticketApi = {
     }
 
     const blob = await response.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
     a.download = `ticket-${ticketId}.pdf`;
     document.body.appendChild(a);
     a.click();
@@ -223,7 +223,7 @@ export interface UserResponse {
 
 export const adminApi = {
   getDashboardStats: () => apiRequest<DashboardStats>("/api/admin/dashboard/stats"),
-  
+
   // Event Management
   getAllEvents: () => apiRequest<EventItem[]>("/api/admin/events"),
   getEvent: (id: string) => apiRequest<EventItem>(`/api/admin/events/${id}`),
@@ -313,19 +313,19 @@ export interface EmergencyContactRequest {
 
 // Profile API
 export const profileApi = {
-  getProfile: (userId: string) => 
+  getProfile: (userId: string) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}`),
-  
-  createProfile: (userId: string) => 
+
+  createProfile: (userId: string) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}`, { method: "POST" }),
-  
+
   updateProfile: (userId: string, payload: ProfileUpdateRequest) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}`, { method: "PUT", body: payload }),
-  
+
   uploadAvatar: (userId: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    
+
     return fetch(`/api/profiles/${userId}/avatar`, {
       method: "POST",
       body: formData,
@@ -337,19 +337,19 @@ export const profileApi = {
       return res.json();
     });
   },
-  
+
   getPreferences: (userId: string) =>
     apiRequest<UserPreferences>(`/api/profiles/${userId}/preferences`),
-  
+
   updatePreferences: (userId: string, payload: PreferencesUpdateRequest) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}/preferences`, { method: "PUT", body: payload }),
-  
+
   getEmergencyContact: (userId: string) =>
     apiRequest<EmergencyContact>(`/api/profiles/${userId}/emergency-contact`),
-  
+
   updateEmergencyContact: (userId: string, payload: EmergencyContactRequest) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}/emergency-contact`, { method: "PUT", body: payload }),
-  
+
   deleteEmergencyContact: (userId: string) =>
     apiRequest<void>(`/api/profiles/${userId}/emergency-contact`, { method: "DELETE" }),
 };
@@ -369,13 +369,13 @@ export interface InAppNotification {
 export const notificationApi = {
   getUserNotifications: (userId: string) =>
     apiRequest<InAppNotification[]>(`/api/notifications/user/${userId}`),
-  
+
   markAsRead: (notificationId: string) =>
     apiRequest<InAppNotification>(`/api/notifications/${notificationId}/read`, { method: "PATCH" }),
-  
+
   markAllAsRead: (userId: string) =>
     apiRequest<void>(`/api/notifications/user/${userId}/read-all`, { method: "PATCH" }),
-  
+
   getUnreadCount: (userId: string) =>
     apiRequest<number>(`/api/notifications/user/${userId}/unread-count`),
 };
@@ -385,6 +385,15 @@ export const broadcastApi = {
   sendBroadcast: (message: string) =>
     apiRequest<void>("/api/admin/broadcast", { method: "POST", body: { message } }),
 };
+
+export interface PaymentStatus {
+  orderId: string;
+  eventId: string;
+  eventTitle: string;
+  amount: string;
+  currency: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+}
 
 // Payment API (PayHere Integration)
 export const paymentApi = {
@@ -397,6 +406,12 @@ export const paymentApi = {
       hash: string;
       action_url: string;
     }>("/api/payment/initiate", { method: "POST", body: payload }),
+  simulatePaymentSuccess: (orderId: string) =>
+    apiRequest<void>(`/api/payment/simulate`, { method: "POST", body: { orderId } }),
+  refundPayment: (orderId: string, bankDetails: any) =>
+    apiRequest<void>(`/api/payment/refund`, { method: "POST", body: { orderId, ...bankDetails } }),
+  getUserPayments: (userId: string) =>
+    apiRequest<PaymentStatus[]>(`/api/payment/user/${userId}`),
 };
 
 // ---- Review Types ----

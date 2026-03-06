@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Calendar, Clock, MapPin, DollarSign, Type, FileText, Image as ImageIcon, X, ArrowLeft, Check } from "lucide-react";
+import { Upload, Calendar, Clock, MapPin, DollarSign, Type, FileText, Image as ImageIcon, X, ArrowLeft, Check, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { eventApi } from "../services/eventflow";
 import { useAuth } from "../contexts/AuthContext";
@@ -9,6 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
 export function CreateEvent() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isEditing = false;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",

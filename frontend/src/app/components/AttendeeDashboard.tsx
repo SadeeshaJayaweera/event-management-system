@@ -1,5 +1,5 @@
-import { eventApi, ticketApi, type EventItem, type TicketItem } from "../services/eventflow";
-import { Search, Calendar, MapPin, Heart, Ticket, LogOut, CheckCircle } from "lucide-react";
+import { eventApi, ticketApi, paymentApi, type EventItem, type TicketItem, type PaymentStatus } from "../services/eventflow";
+import { Search, Calendar, MapPin, Heart, Ticket, LogOut, CheckCircle, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
@@ -15,19 +15,23 @@ export function AttendeeDashboard() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [myTickets, setMyTickets] = useState<TicketItem[]>([]);
   const [myTicketedEvents, setMyTicketedEvents] = useState<EventItem[]>([]);
+  const [cancelledPayments, setCancelledPayments] = useState<PaymentStatus[]>([]);
+  const [refundedOrderIds, setRefundedOrderIds] = useState<Set<string>>(new Set());
+  const [pendingRefundPayment, setPendingRefundPayment] = useState<PaymentStatus | null>(null);
+  const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
+  const [bankDetails, setBankDetails] = useState({ bankName: '', bankBranch: '', bankAccountName: '', bankAccountNumber: '' });
 
   useEffect(() => {
     if (!user) return;
-    
+
     const loadData = async () => {
       try {
         // Load events and user's payments in parallel
         const [eventsData, userPayments]: [EventItem[], PaymentStatus[]] = await Promise.all([
           eventApi.list(),
-          ticketApi.list({ userId: user.id }),
+          paymentApi.getUserPayments(user.id),
         ]);
         setEvents(eventsData);
-        setMyTickets(ticketsData);
 
         // Build a set of current event IDs
         const allEventIds = new Set(eventsData.map(e => e.id));
@@ -45,7 +49,7 @@ export function AttendeeDashboard() {
         }
 
         // For active tickets, load from ticket service as normal
-        const ticketsData: TicketItem[] = await ticketApi.list({ attendeeId: user.id }).catch(() => []);
+        const ticketsData: TicketItem[] = await ticketApi.list({ userId: user.id }).catch(() => []);
         const ticketEventIds = new Set(ticketsData.map(t => t.eventId));
         const userTicketedEvents = eventsData.filter(e => ticketEventIds.has(e.id));
         setMyTicketedEvents(userTicketedEvents);
@@ -85,7 +89,7 @@ export function AttendeeDashboard() {
       setActiveTab('tickets');
       return;
     }
-    
+
     // Navigate to checkout page
     navigate(`/attendee/checkout/${event.id}`);
   };
@@ -102,7 +106,7 @@ export function AttendeeDashboard() {
               </div>
               <span className="text-xl font-bold text-gray-900">EventFlow</span>
             </a>
-            
+
             <div className="hidden md:flex items-center space-x-8">
               <button
                 onClick={() => setActiveTab('discover')}
@@ -127,11 +131,11 @@ export function AttendeeDashboard() {
                 </div>
                 <span className="text-sm font-medium text-gray-700 hidden sm:block">{user?.name}</span>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   logout();
                   navigate('/');
-                }} 
+                }}
                 className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <LogOut className="w-5 h-5" />
@@ -405,7 +409,7 @@ export function AttendeeDashboard() {
                           </span>
                         </div>
                         <div className="mt-6">
-                          <button 
+                          <button
                             onClick={() => navigate('/attendee/tickets')}
                             className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
                           >

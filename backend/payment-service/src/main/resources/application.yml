@@ -34,9 +34,9 @@ payhere:
   merchant-id: "1234081"
   merchant-secret: "MzQ3MjQ4MzE4NDkwNTE5MjM0MzMzMjYyOTM1ODQyMTI4NzQ5MjA1"
   sandbox: true
-  return-url: "http://localhost:3000/payment/success"
-  cancel-url: "http://localhost:3000/attendee"
-  notify-url: "http://host.docker.internal:8080/api/payment/notify"
+  return-url: ${FRONTEND_URL:http://localhost:3000}/payment/success
+  cancel-url: ${FRONTEND_URL:http://localhost:3000}/attendee
+  notify-url: ${BACKEND_API_URL:http://host.docker.internal:8080}/api/payment/notify
 
 ticket-service:
   url: "http://ticket-service:8084"

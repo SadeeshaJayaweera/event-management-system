@@ -1,4 +1,4 @@
-import { Search, MoreVertical, Calendar, MapPin, Users, Plus } from "lucide-react";
+import { Search, MoreVertical, Calendar, MapPin, Users, Plus, AlertTriangle, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { eventApi, ticketApi, type EventItem } from "../services/eventflow";
@@ -22,7 +22,7 @@ export function EventList() {
         // For organizers, only fetch their own events
         const organizerId = user?.role === 'organizer' ? user.id : undefined;
         const data = await eventApi.list(organizerId);
-        
+
         // Fetch ticket counts for each event
         const eventsWithCounts = await Promise.all(
           data.map(async (event) => {
@@ -35,7 +35,7 @@ export function EventList() {
             }
           })
         );
-        
+
         setEvents(eventsWithCounts);
       } catch (error) {
         console.error(error);
@@ -60,9 +60,15 @@ export function EventList() {
 
   const categories = ["All", ...new Set(events.map(e => e.category))];
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (confirmDeleteEvent) {
-      onDeleteEvent?.(confirmDeleteEvent);
+      try {
+        await eventApi.delete(confirmDeleteEvent.id);
+        setEvents(events.filter(e => e.id !== confirmDeleteEvent.id));
+        toast.success("Event deleted successfully");
+      } catch {
+        toast.error("Failed to delete event");
+      }
       setConfirmDeleteEvent(null);
     }
   };
@@ -108,7 +114,7 @@ export function EventList() {
           <p className="text-gray-500 mt-1">Manage and organize your upcoming events.</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={() => navigate('/dashboard/events/create')}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center"
           >
@@ -148,31 +154,30 @@ export function EventList() {
           filteredEvents.map((event) => (
             <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full">
               <div className="relative h-48 overflow-hidden">
-                <img 
-                  src={event.imageUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87"} 
-                  alt={event.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                <img
+                  src={event.imageUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87"}
+                  alt={event.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold text-gray-900 shadow-sm">
                   LKR {event.price}
                 </div>
-                <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold text-white shadow-sm ${
-                  event.status === 'Upcoming' ? 'bg-green-500/90' : 'bg-gray-500/90'
-                }`}>
+                <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-semibold text-white shadow-sm ${event.status === 'Upcoming' ? 'bg-green-500/90' : 'bg-gray-500/90'
+                  }`}>
                   {event.status}
                 </div>
               </div>
-              
+
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-100">
                     {event.category}
                   </span>
                 </div>
-                
+
                 <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">{event.title}</h3>
                 <p className="text-gray-500 text-sm mb-4 line-clamp-2">{event.description}</p>
-                
+
                 <div className="mt-auto space-y-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
@@ -186,11 +191,10 @@ export function EventList() {
                     <Users className="w-4 h-4 text-gray-400" />
                     <span>
                       {event.attendeeCount?.toLocaleString() || 0} sold • {' '}
-                      <span className={`font-medium ${
-                        (event.maxTickets - (event.attendeeCount || 0)) < 10 
-                          ? 'text-red-600' 
+                      <span className={`font-medium ${(event.maxTickets - (event.attendeeCount || 0)) < 10
+                          ? 'text-red-600'
                           : 'text-green-600'
-                      }`}>
+                        }`}>
                         {event.maxTickets - (event.attendeeCount || 0)} remaining
                       </span>
                     </span>
@@ -198,15 +202,15 @@ export function EventList() {
                 </div>
 
                 <div className="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center">
-                   <button 
-                     onClick={() => navigate(`/dashboard/events/${event.id}`)}
-                     className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
-                   >
-                     View Details
-                   </button>
-                   <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                     <MoreVertical className="w-4 h-4" />
-                   </button>
+                  <button
+                    onClick={() => navigate(`/dashboard/events/${event.id}`)}
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    View Details
+                  </button>
+                  <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>

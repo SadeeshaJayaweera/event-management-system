@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Users, Settings, LogOut, PlusCircle, Shield } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogOut, PlusCircle, Shield, DollarSign } from "lucide-react";
 import clsx from "clsx";
 
 interface SidebarProps {
