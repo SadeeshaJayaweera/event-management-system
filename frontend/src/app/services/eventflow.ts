@@ -61,14 +61,6 @@ export const authApi = {
     apiRequest<AuthResponse>("/api/auth/login", { method: "POST", body: payload }),
 };
 
-export interface UserResponse {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status?: string;
-}
-
 export const userApi = {
   getUser: (id: string) => apiRequest<UserResponse>(`/api/users/${id}`),
   getAllUsers: () => apiRequest<UserResponse[]>("/api/users"),
@@ -81,7 +73,6 @@ export const eventApi = {
     const queryString = queryParams.toString();
     return apiRequest<EventItem[]>(queryString ? `/api/events?${queryString}` : "/api/events");
   },
-  get: (id: string) => apiRequest<EventItem>(`/api/events/${id}`),
   create: (payload: {
     title: string;
     category: string;
@@ -110,6 +101,9 @@ export const eventApi = {
 };
 
 export const attendeeApi = {
+  // Note: Attendee service has been removed.
+  // Use ticketApi.list({ eventId }) to get participants for an event.
+  // Each ticket contains a userId that references the user from auth-service.
   list: (eventId?: string) =>
     apiRequest<AttendeeItem[]>(eventId ? `/api/attendees?eventId=${eventId}` : "/api/attendees"),
 
@@ -142,6 +136,10 @@ export const ticketApi = {
       body: payload
     }),
 
+  /**
+   * Downloads the PDF ticket (with QR code) for the given ticket ID.
+   * Triggers a browser file-save dialogue automatically.
+   */
   download: async (ticketId: string): Promise<void> => {
     const headers: Record<string, string> = {};
     const token = getAuthToken();
@@ -176,6 +174,7 @@ export const analyticsApi = {
       return overviewData;
     } catch (error) {
       console.error("Failed to fetch analytics overview:", error);
+      // Return default data if backend not available
       return {
         totalRevenue: "LKR 0.00",
         totalAttendees: "0",
@@ -195,6 +194,7 @@ export const analyticsApi = {
       return revenueData;
     } catch (error) {
       console.error("Failed to fetch revenue data:", error);
+      // Return mock revenue data as fallback
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
       return months.map((name) => ({
         name,
@@ -213,14 +213,26 @@ export interface DashboardStats {
   totalTicketsSold: number;
 }
 
+export interface UserResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+}
+
 export const adminApi = {
   getDashboardStats: () => apiRequest<DashboardStats>("/api/admin/dashboard/stats"),
+
+  // Event Management
   getAllEvents: () => apiRequest<EventItem[]>("/api/admin/events"),
   getEvent: (id: string) => apiRequest<EventItem>(`/api/admin/events/${id}`),
   updateEvent: (id: string, payload: Partial<EventItem>) =>
     apiRequest<EventItem>(`/api/admin/events/${id}`, { method: "PUT", body: payload }),
   deleteEvent: (id: string) =>
     apiRequest<void>(`/api/admin/events/${id}`, { method: "DELETE" }),
+
+  // User Management
   getAllUsers: () => apiRequest<UserResponse[]>("/api/admin/users"),
   getUser: (id: string) => apiRequest<UserResponse>(`/api/admin/users/${id}`),
   deleteUser: (id: string) =>
@@ -231,6 +243,7 @@ export const adminApi = {
     apiRequest<void>(`/api/admin/users/${id}/unban`, { method: "PUT" }),
 };
 
+// Profile Service Types
 export interface UserPreferences {
   id: string;
   emailNotifications: boolean;
@@ -298,14 +311,21 @@ export interface EmergencyContactRequest {
   address?: string;
 }
 
+// Profile API
 export const profileApi = {
-  getProfile: (userId: string) => apiRequest<UserProfile>(`/api/profiles/${userId}`),
-  createProfile: (userId: string) => apiRequest<UserProfile>(`/api/profiles/${userId}`, { method: "POST" }),
+  getProfile: (userId: string) =>
+    apiRequest<UserProfile>(`/api/profiles/${userId}`),
+
+  createProfile: (userId: string) =>
+    apiRequest<UserProfile>(`/api/profiles/${userId}`, { method: "POST" }),
+
   updateProfile: (userId: string, payload: ProfileUpdateRequest) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}`, { method: "PUT", body: payload }),
+
   uploadAvatar: (userId: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
+
     return fetch(`/api/profiles/${userId}/avatar`, {
       method: "POST",
       body: formData,
@@ -317,15 +337,24 @@ export const profileApi = {
       return res.json();
     });
   },
-  getPreferences: (userId: string) => apiRequest<UserPreferences>(`/api/profiles/${userId}/preferences`),
+
+  getPreferences: (userId: string) =>
+    apiRequest<UserPreferences>(`/api/profiles/${userId}/preferences`),
+
   updatePreferences: (userId: string, payload: PreferencesUpdateRequest) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}/preferences`, { method: "PUT", body: payload }),
-  getEmergencyContact: (userId: string) => apiRequest<EmergencyContact>(`/api/profiles/${userId}/emergency-contact`),
+
+  getEmergencyContact: (userId: string) =>
+    apiRequest<EmergencyContact>(`/api/profiles/${userId}/emergency-contact`),
+
   updateEmergencyContact: (userId: string, payload: EmergencyContactRequest) =>
     apiRequest<UserProfile>(`/api/profiles/${userId}/emergency-contact`, { method: "PUT", body: payload }),
-  deleteEmergencyContact: (userId: string) => apiRequest<void>(`/api/profiles/${userId}/emergency-contact`, { method: "DELETE" }),
+
+  deleteEmergencyContact: (userId: string) =>
+    apiRequest<void>(`/api/profiles/${userId}/emergency-contact`, { method: "DELETE" }),
 };
 
+// Notification Types
 export interface InAppNotification {
   id: string;
   userId: string;
@@ -336,87 +365,56 @@ export interface InAppNotification {
   createdAt: string;
 }
 
+// Notification API
 export const notificationApi = {
-  getUserNotifications: (userId: string) => apiRequest<InAppNotification[]>(`/api/notifications/user/${userId}`),
-  markAsRead: (notificationId: string) => apiRequest<InAppNotification>(`/api/notifications/${notificationId}/read`, { method: "PATCH" }),
-  markAllAsRead: (userId: string) => apiRequest<void>(`/api/notifications/user/${userId}/read-all`, { method: "PATCH" }),
-  getUnreadCount: (userId: string) => apiRequest<number>(`/api/notifications/user/${userId}/unread-count`),
+  getUserNotifications: (userId: string) =>
+    apiRequest<InAppNotification[]>(`/api/notifications/user/${userId}`),
+
+  markAsRead: (notificationId: string) =>
+    apiRequest<InAppNotification>(`/api/notifications/${notificationId}/read`, { method: "PATCH" }),
+
+  markAllAsRead: (userId: string) =>
+    apiRequest<void>(`/api/notifications/user/${userId}/read-all`, { method: "PATCH" }),
+
+  getUnreadCount: (userId: string) =>
+    apiRequest<number>(`/api/notifications/user/${userId}/unread-count`),
 };
 
+// Admin Broadcast API
 export const broadcastApi = {
   sendBroadcast: (message: string) =>
     apiRequest<void>("/api/admin/broadcast", { method: "POST", body: { message } }),
 };
 
-export interface PaymentInitPayload {
-  eventId: string;
-  userId: string;
-  amount: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  eventTitle?: string;
-}
-
-export interface PaymentInitResult {
+export interface PaymentStatus {
   orderId: string;
-  merchantId: string;
-  hash: string;
+  eventId: string;
+  eventTitle: string;
   amount: string;
   currency: string;
-  itemName: string;
-  returnUrl: string;
-  cancelUrl: string;
-  notifyUrl: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  sandbox: boolean;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 }
 
-export interface PaymentStatus {
-  id: string;
-  orderId: string;
-  eventId: string;
-  userId: string;
-  amount: number;
-  currency: string;
-  status: string;
-  paymentId: string | null;
-  firstName: string;
-  lastName: string;
-  email: string;
-  eventTitle: string;
-  bankName?: string;
-  bankBranch?: string;
-  bankAccountName?: string;
-  bankAccountNumber?: string;
-  createdAt: string;
-  updatedAt: string | null;
-}
-
+// Payment API (PayHere Integration)
 export const paymentApi = {
   initiate: (payload: { orderId: string; amount: number; currency: string }) =>
-    apiRequest<any>("/api/payment/initiate", { method: "POST", body: payload }),
-  initPayment: (payload: PaymentInitPayload) =>
-    apiRequest<PaymentInitResult>("/api/payment/init", { method: "POST", body: payload }),
-  getPaymentStatus: (orderId: string) =>
-    apiRequest<PaymentStatus>(`/api/payment/status/${orderId}`),
-  getByEventId: (eventId: string) =>
-    apiRequest<PaymentStatus[]>(`/api/payment/event/${eventId}`),
+    apiRequest<{
+      merchant_id: string;
+      order_id: string;
+      amount: string;
+      currency: string;
+      hash: string;
+      action_url: string;
+    }>("/api/payment/initiate", { method: "POST", body: payload }),
   simulatePaymentSuccess: (orderId: string) =>
-    apiRequest<void>(`/api/payment/dev/force-complete/${orderId}`, { method: "POST" }),
-  getByUserId: (userId: string) =>
+    apiRequest<void>(`/api/payment/simulate`, { method: "POST", body: { orderId } }),
+  refundPayment: (orderId: string, bankDetails: any) =>
+    apiRequest<void>(`/api/payment/refund`, { method: "POST", body: { orderId, ...bankDetails } }),
+  getUserPayments: (userId: string) =>
     apiRequest<PaymentStatus[]>(`/api/payment/user/${userId}`),
-  getAllRefunds: () =>
-    apiRequest<PaymentStatus[]>(`/api/payment/refunds`),
-  markRefundDone: (orderId: string) =>
-    apiRequest<void>(`/api/payment/refund-done/${orderId}`, { method: "POST" }),
-  refundPayment: (orderId: string, bankDetails?: { bankName: string; bankBranch: string; bankAccountName: string; bankAccountNumber: string }) =>
-    apiRequest<void>(`/api/payment/refund/${orderId}`, { method: "POST", body: bankDetails }),
 };
+
+// ---- Review Types ----
 
 export type ReviewStatus = "PENDING" | "APPROVED" | "FLAGGED" | "REMOVED";
 
@@ -443,6 +441,8 @@ export interface RatingStats {
   distribution: Record<number, number>;
 }
 
+// ---- Review API ----
+
 export const reviewApi = {
   create: (payload: {
     eventId: string;
@@ -453,7 +453,9 @@ export const reviewApi = {
     pros?: string;
     cons?: string;
   }) => apiRequest<ReviewItem>("/api/reviews", { method: "POST", body: payload }),
+
   getById: (id: string) => apiRequest<ReviewItem>(`/api/reviews/${id}`),
+
   update: (id: string, userId: string, payload: {
     rating?: number;
     title?: string;
@@ -461,17 +463,28 @@ export const reviewApi = {
     pros?: string;
     cons?: string;
   }) => apiRequest<ReviewItem>(`/api/reviews/${id}?userId=${userId}`, { method: "PUT", body: payload }),
+
   delete: (id: string, userId: string) =>
     apiRequest<void>(`/api/reviews/${id}?userId=${userId}`, { method: "DELETE" }),
-  getByEvent: (eventId: string) => apiRequest<ReviewItem[]>(`/api/reviews/event/${eventId}`),
-  getByUser: (userId: string) => apiRequest<ReviewItem[]>(`/api/reviews/user/${userId}`),
+
+  getByEvent: (eventId: string) =>
+    apiRequest<ReviewItem[]>(`/api/reviews/event/${eventId}`),
+
+  getByUser: (userId: string) =>
+    apiRequest<ReviewItem[]>(`/api/reviews/user/${userId}`),
+
   getAverageRating: (eventId: string) =>
     apiRequest<{ eventId: string; averageRating: number }>(`/api/reviews/event/${eventId}/rating`),
+
   getRatingStats: (eventId: string) =>
     apiRequest<RatingStats>(`/api/reviews/event/${eventId}/stats`),
+
   canReview: (eventId: string, userId: string) =>
     apiRequest<{ eventId: string; userId: string; canReview: boolean }>(
       `/api/reviews/can-review/${eventId}?userId=${userId}`
     ),
-  markHelpful: (id: string) => apiRequest<ReviewItem>(`/api/reviews/${id}/helpful`, { method: "POST" }),
+
+  markHelpful: (id: string) =>
+    apiRequest<ReviewItem>(`/api/reviews/${id}/helpful`, { method: "POST" }),
 };
+
