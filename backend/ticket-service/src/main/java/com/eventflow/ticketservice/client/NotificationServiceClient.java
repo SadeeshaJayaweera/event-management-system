@@ -1,5 +1,6 @@
 package com.eventflow.ticketservice.client;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -10,10 +11,12 @@ import java.util.UUID;
 @Component
 public class NotificationServiceClient {
   private final RestTemplate restTemplate;
-  private static final String NOTIFICATION_SERVICE_URL = "http://notification-service/api/notifications/in-app";
+  private final String notificationServiceUrl;
 
-  public NotificationServiceClient(RestTemplate restTemplate) {
+  public NotificationServiceClient(RestTemplate restTemplate,
+      @Value("${notification-service.url:http://notification-service:8085}") String notificationServiceUrl) {
     this.restTemplate = restTemplate;
+    this.notificationServiceUrl = notificationServiceUrl;
   }
 
   public void sendInAppNotification(UUID userId, String notificationType, String message, String actionUrl) {
@@ -24,7 +27,7 @@ public class NotificationServiceClient {
       request.put("message", message);
       request.put("actionUrl", actionUrl);
 
-      restTemplate.postForEntity(NOTIFICATION_SERVICE_URL, request, Object.class);
+      restTemplate.postForEntity(notificationServiceUrl + "/api/notifications/in-app", request, Object.class);
     } catch (Exception e) {
       // Log error but don't fail the main operation
       System.err.println("Failed to send notification: " + e.getMessage());

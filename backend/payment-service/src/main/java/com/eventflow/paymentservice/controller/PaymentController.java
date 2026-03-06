@@ -63,6 +63,19 @@ public class PaymentController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Simulate payment success — called by frontend PaymentSuccess page.
+     * Accepts { orderId } in request body.
+     */
+    @PostMapping("/simulate")
+    public ResponseEntity<Void> simulatePayment(@RequestBody java.util.Map<String, String> body) {
+        String orderId = body.get("orderId");
+        if (orderId != null) {
+            paymentService.simulateNotificationForDev(orderId);
+        }
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/event/{eventId}")
     public ResponseEntity<java.util.List<PaymentResponse>> getByEventId(@PathVariable java.util.UUID eventId) {
         return ResponseEntity.ok(
@@ -77,6 +90,20 @@ public class PaymentController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Refund endpoint called by frontend — orderId is in the request body.
+     */
+    @PostMapping("/refund")
+    public ResponseEntity<Void> refundPaymentFromBody(
+            @RequestBody java.util.Map<String, String> body) {
+        String orderId = body.get("orderId");
+        if (orderId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        paymentService.refundPayment(orderId, body);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/refunds")
     public ResponseEntity<java.util.List<PaymentResponse>> getRefunds() {
         return ResponseEntity.ok(
@@ -85,6 +112,12 @@ public class PaymentController {
 
     @PostMapping("/refund-done/{orderId}")
     public ResponseEntity<Void> markRefundDone(@PathVariable String orderId) {
+        paymentService.markRefundDone(orderId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/refund-done/{orderId}")
+    public ResponseEntity<Void> markRefundDonePut(@PathVariable String orderId) {
         paymentService.markRefundDone(orderId);
         return ResponseEntity.ok().build();
     }

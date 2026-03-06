@@ -42,4 +42,11 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+# Internal service URLs (overridden via env vars on Azure)
+event-service:
+  url: ${EVENT_SERVICE_URL:http://event-service:8081}
+
+notification-service:
+  url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8085}
+
 

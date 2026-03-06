@@ -407,15 +407,32 @@ export interface PaymentStatus {
 
 // Payment API (PayHere Integration)
 export const paymentApi = {
-  initiate: (payload: { orderId: string; amount: number; currency: string }) =>
+  initiate: (payload: {
+    eventId: string;
+    userId: string;
+    amount: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    eventTitle?: string;
+  }) =>
     apiRequest<{
-      merchant_id: string;
-      order_id: string;
+      orderId: string;
+      merchantId: string;
+      hash: string;
       amount: string;
       currency: string;
-      hash: string;
-      action_url: string;
-    }>("/api/payment/initiate", { method: "POST", body: payload }),
+      itemName: string;
+      returnUrl: string;
+      cancelUrl: string;
+      notifyUrl: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      sandbox: boolean;
+    }>("/api/payment/init", { method: "POST", body: payload }),
   simulatePaymentSuccess: (orderId: string) =>
     apiRequest<void>(`/api/payment/simulate`, { method: "POST", body: { orderId } }),
   refundPayment: (orderId: string, bankDetails: any) =>
@@ -425,7 +442,7 @@ export const paymentApi = {
   getAllRefunds: () =>
     apiRequest<PaymentStatus[]>(`/api/payment/refunds`),
   markRefundDone: (orderId: string) =>
-    apiRequest<void>(`/api/payment/refund/${orderId}/done`, { method: "PUT" }),
+    apiRequest<void>(`/api/payment/refund-done/${orderId}`, { method: "PUT" }),
 };
 
 // ---- Review Types ----

@@ -30,7 +30,8 @@ public class RouteValidator {
             "/api/events", // Viewing events list (GET only)
             "/api/attendees", // Viewing attendees list (GET only)
             "/api/tickets", // Viewing tickets list (GET only)
-            "/api/analytics" // Viewing analytics data (GET only)
+            "/api/analytics", // Viewing analytics data (GET only)
+            "/api/reviews" // Viewing reviews (GET only)
     );
 
     public boolean isOpenEndpoint(ServerHttpRequest request) {
