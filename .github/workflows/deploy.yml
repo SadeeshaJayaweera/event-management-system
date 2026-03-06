@@ -42,7 +42,6 @@ jobs:
             ["backend/payment-service"]="payment-service"
             ["backend/admin-service"]="admin-service"
             ["backend/profile-service"]="profile-service"
-            ["backend/attendee-service"]="attendee-service"
             ["frontend"]="frontend"
           )
 
@@ -100,7 +99,6 @@ jobs:
             ["review-service"]="8089:review_schema:true:1:0.25:0.5Gi"
             ["payment-service"]="8083:payment_schema:true:1:0.5:1.0Gi"
             ["admin-service"]="8087:admin_schema:true:1:0.25:0.5Gi"
-            ["attendee-service"]="8090:attendee_schema:true:1:0.25:0.5Gi"
             ["frontend"]="3000::false:1:0.25:0.5Gi"
           )
 
