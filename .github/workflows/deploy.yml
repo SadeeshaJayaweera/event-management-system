@@ -125,10 +125,23 @@ jobs:
             
             # Service-specific configurations
             case "${service}" in
+              "api-gateway")
+                # Set service URLs for API Gateway to communicate with other services in Azure Container Apps
+                ENV_VARS="${ENV_VARS} AUTH_SERVICE_URL=http://auth-service"
+                ENV_VARS="${ENV_VARS} EVENT_SERVICE_URL=http://event-service"
+                ENV_VARS="${ENV_VARS} TICKET_SERVICE_URL=http://ticket-service"
+                ENV_VARS="${ENV_VARS} NOTIFICATION_SERVICE_URL=http://notification-service"
+                ENV_VARS="${ENV_VARS} PAYMENT_SERVICE_URL=http://payment-service"
+                ENV_VARS="${ENV_VARS} PROFILE_SERVICE_URL=http://profile-service"
+                ENV_VARS="${ENV_VARS} ANALYTICS_SERVICE_URL=http://analytics-service"
+                ENV_VARS="${ENV_VARS} ADMIN_SERVICE_URL=http://admin-service"
+                ENV_VARS="${ENV_VARS} REVIEW_SERVICE_URL=http://review-service"
+                ;;
               "notification-service")
                 ENV_VARS="${ENV_VARS} SPRING_MAIL_USERNAME=${NOTIFICATION_MAIL_USERNAME} SPRING_MAIL_PASSWORD=${NOTIFICATION_MAIL_PASSWORD}"
                 # Add service URLs for inter-service communication
-                ENV_VARS="${ENV_VARS} EVENT_SERVICE_URL=http://event-service:8081 TICKET_SERVICE_URL=http://ticket-service:8084"
+                ENV_VARS="${ENV_VARS} EVENT_SERVICE_URL=http://event-service"
+                ENV_VARS="${ENV_VARS} TICKET_SERVICE_URL=http://ticket-service"
                 ;;
               "payment-service")
                 ENV_VARS="${ENV_VARS} PAYHERE_MERCHANT_ID=${PAYHERE_MERCHANT_ID} PAYHERE_MERCHANT_SECRET=${PAYHERE_MERCHANT_SECRET}"
@@ -138,8 +151,8 @@ jobs:
                 if [ -n "$BACKEND_API_URL" ]; then
                   ENV_VARS="${ENV_VARS} BACKEND_API_URL=${BACKEND_API_URL}"
                 fi
-                # Add ticket service URL
-                ENV_VARS="${ENV_VARS} TICKET_SERVICE_URL=http://ticket-service:8084"
+                # Add ticket service URL for Azure Container Apps
+                ENV_VARS="${ENV_VARS} TICKET_SERVICE_URL=http://ticket-service"
                 ;;
             esac
 

@@ -43,7 +43,7 @@ payhere:
   sandbox: ${PAYHERE_SANDBOX:true}
   return-url: ${FRONTEND_URL:http://localhost:3000}/payment/success
   cancel-url: ${FRONTEND_URL:http://localhost:3000}/attendee
-  notify-url: ${BACKEND_API_URL:http://host.docker.internal:8080}/api/payment/notify
+  notify-url: ${BACKEND_API_URL:http://localhost:8080}/api/payment/notify
 
 ticket-service:
   url: ${TICKET_SERVICE_URL:http://ticket-service:8084}
