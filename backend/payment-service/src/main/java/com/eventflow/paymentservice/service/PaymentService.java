@@ -43,6 +43,9 @@ public class PaymentService {
     @Value("${ticket-service.url}")
     private String ticketServiceUrl;
 
+    @Value("${app.demo-mode:true}")
+    private boolean demoMode;
+
     private final PaymentRepository paymentRepository;
     private final RestTemplate restTemplate;
 
@@ -94,6 +97,62 @@ public class PaymentService {
         resp.setEmail(request.getEmail());
         resp.setPhone(request.getPhone());
         resp.setSandbox(sandbox);
+        return resp;
+    }
+
+    /**
+     * Demo-friendly payment initialization.
+     * Auto-completes payment and creates ticket immediately.
+     */
+    public PaymentInitResponse initDemoPayment(PaymentInitRequest request) {
+        log.info("DEMO MODE: Auto-completing payment for user {} and event {}", 
+                 request.getUserId(), request.getEventId());
+        
+        // Generate unique order ID
+        String orderId = "DEMO-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String paymentId = "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        // Create and save completed payment
+        Payment payment = new Payment();
+        payment.setOrderId(orderId);
+        payment.setEventId(request.getEventId());
+        payment.setUserId(request.getUserId());
+        payment.setAmount(request.getAmount());
+        payment.setCurrency("LKR");
+        payment.setStatus("COMPLETED"); // Auto-complete for demo
+        payment.setPaymentId(paymentId);
+        payment.setFirstName(request.getFirstName());
+        payment.setLastName(request.getLastName());
+        payment.setEmail(request.getEmail());
+        payment.setPhone(request.getPhone());
+        payment.setEventTitle(request.getEventTitle() != null ? request.getEventTitle() : "Event Ticket");
+        payment.setCreatedAt(LocalDateTime.now());
+        payment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
+        // Create ticket immediately
+        createTicket(payment);
+        
+        // Create in-app notification for successful purchase
+        createPurchaseNotification(payment);
+
+        // Build response indicating success
+        PaymentInitResponse resp = new PaymentInitResponse();
+        resp.setOrderId(orderId);
+        resp.setMerchantId("DEMO");
+        resp.setHash("DEMO_HASH");
+        resp.setAmount(request.getAmount().setScale(2, RoundingMode.HALF_UP).toPlainString());
+        resp.setCurrency("LKR");
+        resp.setItemName(payment.getEventTitle());
+        resp.setReturnUrl("/attendee/tickets"); // Redirect to tickets page
+        resp.setCancelUrl("/attendee");
+        resp.setNotifyUrl("DEMO");
+        resp.setFirstName(request.getFirstName());
+        resp.setLastName(request.getLastName());
+        resp.setEmail(request.getEmail());
+        resp.setPhone(request.getPhone());
+        resp.setSandbox(true);
+        resp.setDemoMode(true); // Add demo flag
         return resp;
     }
 
@@ -221,6 +280,28 @@ public class PaymentService {
             log.info("Ticket created successfully: {}", response.getBody());
         } catch (Exception e) {
             log.error("Failed to create ticket for payment {}: {}", payment.getOrderId(), e.getMessage());
+        }
+    }
+
+    private void createPurchaseNotification(Payment payment) {
+        try {
+            // Create in-app notification for successful ticket purchase
+            Map<String, Object> notificationRequest = new HashMap<>();
+            notificationRequest.put("userId", payment.getUserId().toString());
+            notificationRequest.put("notificationType", "TICKET_PURCHASED");
+            notificationRequest.put("message", "🎉 Ticket purchased successfully for " + payment.getEventTitle() + "!");
+            notificationRequest.put("actionUrl", "/attendee/tickets");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(notificationRequest, headers);
+
+            String notificationServiceUrl = "http://notification-service:8085";
+            ResponseEntity<?> response = restTemplate.postForEntity(
+                    notificationServiceUrl + "/api/notifications/in-app", entity, Map.class);
+            log.info("Purchase notification created: {}", response.getBody());
+        } catch (Exception e) {
+            log.error("Failed to create purchase notification for payment {}: {}", payment.getOrderId(), e.getMessage());
         }
     }
 

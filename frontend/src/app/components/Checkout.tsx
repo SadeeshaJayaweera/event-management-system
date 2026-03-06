@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ticketApi, eventApi, type EventItem } from "../services/eventflow";
+import { ticketApi, eventApi, paymentApi, type EventItem } from "../services/eventflow";
 import { Loader2, ArrowLeft, CreditCard, CheckCircle, Minus, Plus, Ticket, MapPin, Calendar, Clock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
@@ -78,19 +78,35 @@ export function Checkout() {
 
         setLoading(true);
         try {
-            // Direct ticket purchase – no external payment gateway
-            const purchasedTickets = await ticketApi.purchase({
-                eventId: event.id, userId: user.id, price: event.price, quantity
+            // For demo: Use payment API which auto-completes the payment
+            const paymentResponse = await paymentApi.initiate({
+                eventId: event.id,
+                userId: user.id,
+                amount: event.price * quantity,
+                firstName: user.name.split(' ')[0] || 'User',
+                lastName: user.name.split(' ').slice(1).join(' ') || '',
+                email: user.email || 'user@example.com',
+                phone: '0771234567',
+                eventTitle: event.title
             });
-            console.log(`Successfully created ${purchasedTickets.length} ticket(s):`, purchasedTickets);
-            setShowConfirmation(true);
-            toast.success(
-                quantity === 1
-                    ? `Payment successful! Your ticket has been created.`
-                    : `Payment successful! ${quantity} tickets have been created.`
-            );
-            // Redirect to My Tickets page after brief confirmation screen
-            setTimeout(() => navigate('/attendee/tickets'), 2500);
+
+            console.log('Payment response:', paymentResponse);
+
+            // In demo mode, payment is auto-completed, so show success immediately
+            if (paymentResponse.demoMode) {
+                setShowConfirmation(true);
+                toast.success(
+                    quantity === 1
+                        ? `Payment successful! Your ticket has been created.`
+                        : `Payment successful! ${quantity} tickets have been created.`
+                );
+                // Redirect to My Tickets page after brief confirmation screen
+                setTimeout(() => navigate('/attendee/tickets'), 2500);
+            } else {
+                // If not demo mode, would redirect to PayHere (but we're keeping it simple for demo)
+                toast.error("Payment gateway not configured for demo");
+                setLoading(false);
+            }
         } catch (error: any) {
             console.error(error);
             toast.error(error?.message || "Failed to process payment");

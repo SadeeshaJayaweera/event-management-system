@@ -432,6 +432,7 @@ export const paymentApi = {
       email: string;
       phone: string;
       sandbox: boolean;
+      demoMode?: boolean;
     }>("/api/payment/init", { method: "POST", body: payload }),
   simulatePaymentSuccess: (orderId: string) =>
     apiRequest<void>(`/api/payment/simulate`, { method: "POST", body: { orderId } }),

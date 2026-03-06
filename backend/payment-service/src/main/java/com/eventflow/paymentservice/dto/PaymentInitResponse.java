@@ -15,6 +15,7 @@ public class PaymentInitResponse {
     private String email;
     private String phone;
     private boolean sandbox;
+    private boolean demoMode;
 
     public String getOrderId() {
         return orderId;
@@ -126,5 +127,13 @@ public class PaymentInitResponse {
 
     public void setSandbox(boolean sandbox) {
         this.sandbox = sandbox;
+    }
+
+    public boolean isDemoMode() {
+        return demoMode;
+    }
+
+    public void setDemoMode(boolean demoMode) {
+        this.demoMode = demoMode;
     }
 }

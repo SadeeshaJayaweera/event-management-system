@@ -23,14 +23,18 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: your_email@gmail.com
-    password: ${SPRING_DATASOURCE_PASSWORD:your_app_password}
+    username: ${SPRING_MAIL_USERNAME:your_email@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:your_app_password}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 eureka:
   client:
@@ -41,6 +45,17 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     preferIpAddress: true
+
+# Service URLs for inter-service communication
+event-service:
+  url: ${EVENT_SERVICE_URL:http://event-service:8081}
+
+ticket-service:
+  url: ${TICKET_SERVICE_URL:http://ticket-service:8084}
+
+# Demo mode configuration
+app:
+  demo-mode: ${DEMO_MODE:true}
 
 # Springdoc OpenAPI Configuration
 springdoc:

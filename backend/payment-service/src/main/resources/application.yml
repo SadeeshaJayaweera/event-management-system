@@ -38,15 +38,19 @@ eureka:
     preferIpAddress: true
 
 payhere:
-  merchant-id: "1234081"
-  merchant-secret: "MzQ3MjQ4MzE4NDkwNTE5MjM0MzMzMjYyOTM1ODQyMTI4NzQ5MjA1"
-  sandbox: true
+  merchant-id: ${PAYHERE_MERCHANT_ID:1234081}
+  merchant-secret: ${PAYHERE_MERCHANT_SECRET:MzQ3MjQ4MzE4NDkwNTE5MjM0MzMzMjYyOTM1ODQyMTI4NzQ5MjA1}
+  sandbox: ${PAYHERE_SANDBOX:true}
   return-url: ${FRONTEND_URL:http://localhost:3000}/payment/success
   cancel-url: ${FRONTEND_URL:http://localhost:3000}/attendee
   notify-url: ${BACKEND_API_URL:http://host.docker.internal:8080}/api/payment/notify
 
 ticket-service:
-  url: "http://ticket-service:8084"
+  url: ${TICKET_SERVICE_URL:http://ticket-service:8084}
+
+# Demo mode configuration
+app:
+  demo-mode: ${DEMO_MODE:true}
 
 # Springdoc OpenAPI Configuration
 springdoc:
