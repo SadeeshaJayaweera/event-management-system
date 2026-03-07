@@ -143,6 +143,11 @@ jobs:
                 ENV_VARS="${ENV_VARS} EVENT_SERVICE_URL=http://event-service"
                 ENV_VARS="${ENV_VARS} TICKET_SERVICE_URL=http://ticket-service"
                 ;;
+              "ticket-service")
+                # Add service URLs for ticket service
+                ENV_VARS="${ENV_VARS} EVENT_SERVICE_URL=http://event-service"
+                ENV_VARS="${ENV_VARS} NOTIFICATION_SERVICE_URL=http://notification-service"
+                ;;
               "payment-service")
                 ENV_VARS="${ENV_VARS} PAYHERE_MERCHANT_ID=${PAYHERE_MERCHANT_ID} PAYHERE_MERCHANT_SECRET=${PAYHERE_MERCHANT_SECRET}"
                 if [ -n "$FRONTEND_URL" ]; then
