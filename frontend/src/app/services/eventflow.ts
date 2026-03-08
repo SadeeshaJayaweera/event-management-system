@@ -367,6 +367,14 @@ export interface InAppNotification {
 
 // Notification API
 export const notificationApi = {
+  createInApp: (payload: {
+    userId: string;
+    notificationType: string;
+    message: string;
+    actionUrl?: string;
+  }) =>
+    apiRequest<any>("/api/notifications/in-app", { method: "POST", body: payload }),
+    
   getUserNotifications: (userId: string) =>
     apiRequest<InAppNotification[]>(`/api/notifications/user/${userId}`),
 

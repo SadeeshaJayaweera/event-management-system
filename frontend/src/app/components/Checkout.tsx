@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ticketApi, eventApi, paymentApi, type EventItem } from "../services/eventflow";
+import { ticketApi, eventApi, notificationApi, type EventItem } from "../services/eventflow";
 import { Loader2, ArrowLeft, CreditCard, CheckCircle, Minus, Plus, Ticket, MapPin, Calendar, Clock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
@@ -78,38 +78,66 @@ export function Checkout() {
 
         setLoading(true);
         try {
-            // For demo: Use payment API which auto-completes the payment
-            const paymentResponse = await paymentApi.initiate({
+            console.log('Creating tickets directly for:', {
                 eventId: event.id,
                 userId: user.id,
-                amount: event.price * quantity,
-                firstName: user.name.split(' ')[0] || 'User',
-                lastName: user.name.split(' ').slice(1).join(' ') || '',
-                email: user.email || 'user@example.com',
-                phone: '0771234567',
-                eventTitle: event.title
+                price: event.price,
+                quantity: quantity
             });
 
-            console.log('Payment response:', paymentResponse);
+            // Direct ticket creation
+            const purchasedTickets = await ticketApi.purchase({
+                eventId: event.id,
+                userId: user.id,
+                price: event.price,
+                quantity: quantity
+            });
 
-            // In demo mode, payment is auto-completed, so show success immediately
-            if (paymentResponse.demoMode) {
-                setShowConfirmation(true);
-                toast.success(
-                    quantity === 1
-                        ? `Payment successful! Your ticket has been created.`
-                        : `Payment successful! ${quantity} tickets have been created.`
-                );
-                // Redirect to My Tickets page after brief confirmation screen
-                setTimeout(() => navigate('/attendee/tickets'), 2500);
-            } else {
-                // If not demo mode, would redirect to PayHere (but we're keeping it simple for demo)
-                toast.error("Payment gateway not configured for demo");
-                setLoading(false);
+            console.log('Tickets created successfully:', purchasedTickets);
+
+            // Create in-app notification for successful purchase
+            try {
+                await notificationApi.createInApp({
+                    userId: user.id,
+                    notificationType: 'TICKET_PURCHASED',
+                    message: `🎉 ${quantity === 1 ? 'Ticket' : quantity + ' tickets'} purchased successfully for ${event.title}!`,
+                    actionUrl: '/attendee/tickets'
+                });
+                console.log('Purchase notification created');
+            } catch (notificationError) {
+                console.log('Notification creation failed, but tickets were purchased:', notificationError);
             }
+
+            // Show success immediately
+            setShowConfirmation(true);
+            toast.success(
+                quantity === 1
+                    ? `Ticket purchased successfully!`
+                    : `${quantity} tickets purchased successfully!`
+            );
+            
+            // Redirect to My Tickets page after brief confirmation screen
+            setTimeout(() => {
+                console.log('Redirecting to tickets page...');
+                navigate('/attendee/tickets');
+            }, 2500);
+
         } catch (error: any) {
-            console.error(error);
-            toast.error(error?.message || "Failed to process payment");
+            console.error('Ticket purchase error:', error);
+            
+            // More specific error messages
+            let errorMessage = "Failed to purchase tickets. Please try again.";
+            if (error.message) {
+                if (error.message.includes('maximum')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('remaining')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                    errorMessage = "Network error. Please check your connection and try again.";
+                }
+            }
+            
+            toast.error(errorMessage);
             setLoading(false);
         }
     };

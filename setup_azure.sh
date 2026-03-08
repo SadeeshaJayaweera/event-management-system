@@ -35,12 +35,14 @@ echo "6. Creating target Container Apps..."
 
 SERVICES=(
   "auth-service:8082:internal"
-  "profile-service:8081:internal"
-  "event-service:8083:internal"
+  "profile-service:8088:internal"
+  "event-service:8081:internal"
   "ticket-service:8084:internal"
   "notification-service:8085:internal"
   "analytics-service:8086:internal"
   "review-service:8089:internal"
+  "payment-service:8083:internal"
+  "admin-service:8087:internal"
   "api-gateway:8080:external"
   "frontend:3000:external"
 )

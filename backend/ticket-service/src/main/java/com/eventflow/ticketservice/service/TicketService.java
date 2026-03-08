@@ -30,7 +30,12 @@ public class TicketService {
   public List<Ticket> purchase(TicketPurchaseRequest request) {
     // Get event details to check capacity — if event-service unreachable, continue
     // with soft validation
-    Map<String, Object> event = eventServiceClient.getEvent(request.getEventId());
+    Map<String, Object> event = null;
+    try {
+      event = eventServiceClient.getEvent(request.getEventId());
+    } catch (Exception e) {
+      System.err.println("Warning: Could not reach event-service to validate event. Proceeding with purchase: " + e.getMessage());
+    }
 
     if (event != null) {
       Integer maxTickets = event.get("maxTickets") != null
@@ -45,7 +50,7 @@ public class TicketService {
         }
       }
     } else {
-      System.err.println("Warning: Could not reach event-service to validate capacity. Proceeding with purchase.");
+      System.err.println("Warning: Could not validate event capacity. Proceeding with purchase for event: " + request.getEventId());
     }
     // Check if user already has 3 or more tickets for this event
     long userExistingTickets = ticketRepository.findByEventIdAndUserId(request.getEventId(), request.getUserId()).size();
