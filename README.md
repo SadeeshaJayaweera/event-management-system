@@ -13,19 +13,28 @@ A microservices-based event management platform built with **Spring Boot**, **Re
 
 ## Application Preview 
 
-<img src="Preview1.png">
+<img src="Preview 1.png">
 <br>
-<img src="Preview2.png">
+<img src="Preview 2.png">
 <br>
 
+
+
+<br>
 🧑‍💼 Organizer Dashboard
 
-<img src="Preview3.png" width="800"/> <br><br> <img src="Preview4.png" width="800"/> <br><br>
+<img src="Preview 4.png">
+<br>
+<img src="Preview 5.png">
+<br>
+<img src="Preview 6.png">
 <br>
 
 🎟️ Attendee Dashboard
 
-<img src="Preview5.png">
+<img src="Preview 7.png">
+<br>
+<img src="Preview 8.png">
 
 ## 🎯 Overview
 
